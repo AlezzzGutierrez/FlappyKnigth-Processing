@@ -73,7 +73,7 @@ private boolean xPresionada = false;
 
         // empuje hacia abajo: pequeño valor constante que baja al jugador suavemente
         // interpretamos este vector como "pixels/segundo" hacia abajo.
-        empujeAbajo = new PVector(0, 30); // 40 px/s hacia abajo — ajustable
+        empujeAbajo = new PVector(0, 20); // 40 px/s hacia abajo — ajustable
     }
 
     // ============================================================
