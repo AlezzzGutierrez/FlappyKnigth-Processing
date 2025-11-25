@@ -32,13 +32,17 @@ public abstract class Item {
     // ----- Efectos -----
     protected int puntosVida;      // positivo o negativo
     protected int puntosStamina;   // positivo o negativo
+    // ----- Imagen ----
+    protected PImage sprite;
 
     public Item(
         float x, float y,
         float ancho, float alto,
         float velocidad,
         int puntosVida,
-        int puntosStamina
+        int puntosStamina,
+        String rutaImagen
+        
     ) {
         this.x = x;
         this.y = y;
@@ -49,6 +53,9 @@ public abstract class Item {
 
         this.puntosVida = puntosVida;
         this.puntosStamina = puntosStamina;
+        if(rutaImagen!=null){
+          sprite =loadImage(rutaImagen);
+        }
     }
 
     // ============================================================

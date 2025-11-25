@@ -16,14 +16,15 @@ public class Nivel2 extends NivelBase {
 
         cargarFondos(
             new String[]{
-                "bosque5.png",
+              "Zona Cueva.png"
+              /*  "bosque5.png",
                 "bosque4.png",
                 "bosque3.png",
                 "bosque2.png",
-                "bosque1.png"
+                "bosque1.png"**/
             },
-            new float[]{ -0.3f, -0.6f, -1.0f, -1.3f, -1.5f }
-        );
+            new float[]{ -0.3f/*, -0.6f, -1.0f, -1.3f, -1.5f **/}
+             );
     }
 
     @Override

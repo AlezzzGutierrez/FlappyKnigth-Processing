@@ -19,13 +19,20 @@ public class PocionVida extends Item {
             30, 30,   // tamaño pequeño
             180,      // velocidad (igual que obstáculo)
             +10,      // puntosVida
-            0         // puntosStamina
+            0,         // puntosStamina
+            "item_pocionvida.png"
         );
     }
 
     @Override
     public void dibujar() {
-        fill(0, 255, 0);  // verde
+       /* fill(0, 255, 0);  // verde
+        rect(x, y, ancho, alto);**/
+        if (sprite!=null){
+        image(sprite,x,y,ancho,alto);
+        }else{
+         fill(0, 255, 0);  // verde
         rect(x, y, ancho, alto);
+        }
     }
 }
