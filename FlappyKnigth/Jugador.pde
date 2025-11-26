@@ -1,89 +1,99 @@
-
 // ============================================================
 // =============== CLASE BASE PARA TODOS LOS JUGADORES ========
 // ============================================================
+
+/*
+   Esta clase es:
+   ✔ Abstracta (no se puede instanciar)
+   ✔ Base / Padre para jugadores específicos
+   ✔ Dependiente de Processing (usa PImage, PVector, keyPressed, etc.)
+   ✔ Usa PVectors (IMPORTANTE: ya trabaja en sistema vectorial)
+   ✔ Editada para documentar matemáticas, comportamiento y atributos
+*/
+
 public abstract class Jugador {
 
     // ============================================================
     // ---------------------- ATRIBUTOS ----------------------------
     // ============================================================
 
-    // --- Estadísticas ---
-    private int vida = 100;
+    /* ----------- ESTADÍSTICAS PRINCIPALES ----------- */
+    private int vida = 100;  // vida actual del jugador
 
-    // STAMINA configurada en 60
+    /* ----------- CONTROL DE SPRITES ----------- */
+    protected PImage spriteNormal;
+    protected PImage spriteEspecial;
+    protected PImage spriteActual;
+
+    protected float tiempoSpriteEspecial = 0; // duración del sprite temporal
+
+    /* ----------- STAMINA ----------- */
     private int stamina = 60;
     private int staminaMax = 60;
-
     private float tiempoParaRegenerar = 0;
 
+    /* ----------- IDENTIDAD ----------- */
     private String nombre;
     protected int colorJugador;
 
-    // --- Movimiento (usando PVector simple) ---
-    private PVector pos;       // posición (punto de contacto / suelo)
-    private PVector vel;       // velocidad aplicada cada frame
-
-    // fuerza simple de salto (valor intuitivo)
-    private float fuerzaSalto = 12;
-
-    // empuje constante hacia abajo (pvector simplificado -> pixels por segundo)
+    /* ----------- MOVIMIENTO (USA PVECTORES) ----------- */
+    /* 
+       pos:    posición del jugador (coord. de piso)
+       vel:    velocidad aplicada cada frame
+       empujeAbajo: gravedad simplificada en px/s
+    */
+    private PVector pos;
+    private PVector vel;
     private PVector empujeAbajo;
 
+    private float fuerzaSalto = 12; // salto simple
     private boolean teclaSpacePresionada = false;
 
-    private float ancho = 40;
-    private float alto  = 40;
+    /* ----------- TAMAÑO FÍSICO ----------- */
+    protected float ancho = 40;
+    protected float alto  = 40;
 
-    // límites de la escena
+    /* ----------- LÍMITES ESCENA ----------- */
     public static final float TECHO = 100;
     public static final float PISO  = 500;
-    
+
+    /* ----------- NIVEL ASIGNADO ----------- */
     protected NivelBase nivelActual;
-    
-    // ======================
-// ------ INMUNIDAD -----
-// ======================
-private boolean esInvulnerable = false;
-private float tiempoInvulnerableRestante = 0;
 
-    
-    // ---------------------- ATRIBUTOS ----------------------------
+    /* ----------- INVULNERABILIDAD ----------- */
+    private boolean esInvulnerable = false;
+    private float tiempoInvulnerableRestante = 0;
 
-// ... (otros atributos)
-private boolean zPresionada = false;
-private boolean xPresionada = false;
-
-
+    /* ----------- CONTROLES Z/X ----------- */
+    private boolean zPresionada = false;
+    private boolean xPresionada = false;
 
 
     // ============================================================
     // ----------------------- CONSTRUCTOR -------------------------
     // ============================================================
+
     public Jugador(String nombre, int colorJugador) {
 
         this.nombre = nombre;
         this.colorJugador = colorJugador;
 
-        // posición inicial en el "suelo"
+        /* PVectors inicializados en el constructor (correcto OOP) */
         pos = new PVector(50, PISO);
-
-        // velocidad inicial en 0
         vel = new PVector(0, 0);
-
-        // empuje hacia abajo: pequeño valor constante que baja al jugador suavemente
-        // interpretamos este vector como "pixels/segundo" hacia abajo.
-        empujeAbajo = new PVector(0, 20); // 40 px/s hacia abajo — ajustable
+        empujeAbajo = new PVector(0, 10); // gravedad simple (px/s)
     }
+
 
     // ============================================================
     // ----------------------- GETTERS -----------------------------
     // ============================================================
+
     public int getVida() { return vida; }
     public String getNombre() { return nombre; }
     public int getColor() { return colorJugador; }
 
-    // hitbox de colisión (pos representa el "piso" del jugador)
+    /* Hitbox dependiente de la posición */
     public float getHitboxX() { return pos.x; }
     public float getHitboxY() { return pos.y - alto; }
     public float getHitboxW() { return ancho; }
@@ -95,40 +105,40 @@ private boolean xPresionada = false;
 
 
     // ============================================================
-    // ---------------- MATEMÁTICA BÁSICA --------------------------
+    // ---------------- MATEMÁTICA BÁSICA (DAÑO/CURA) -------------
     // ============================================================
+
     public void recibirDanio(int d) {
 
-    if (esInvulnerable) return; // NO recibe daño
+        if (esInvulnerable) return;
 
-    vida -= d;
-    if (vida < 0) vida = 0;
+        vida -= d;
+        if (vida < 0) vida = 0;
 
-    // Inmunidad natural de 1 segundo después de recibir daño
-    activarInmunidad(1.0f);
-}
-
+        activarInmunidad(1.0f); // matemáticamente: tiempo en segundos
+    }
 
     public void curar(int c) {
         vida += c;
         if (vida > 100) vida = 100;
     }
-    
+
     public void asignarNivel(NivelBase nivel) {
-    this.nivelActual = nivel;
-}
+        this.nivelActual = nivel;
+    }
 
 
     // ============================================================
     // ---------------- REGENERAR STAMINA --------------------------
     // ============================================================
+
     public void regenerarStamina(float dt) {
 
+        /* dt = tiempo en segundos → regeneración 1 por segundo */
         tiempoParaRegenerar += dt;
 
         if (tiempoParaRegenerar >= 1.0f) {
             tiempoParaRegenerar = 0;
-
             stamina++;
             if (stamina > staminaMax) stamina = staminaMax;
         }
@@ -138,20 +148,19 @@ private boolean xPresionada = false;
     // ============================================================
     // ------------------ SALTAR (CONTROL) -------------------------
     // ============================================================
-public void presionarSpace() {
 
-    if (!teclaSpacePresionada) {
+    public void presionarSpace() {
 
-        if (stamina > 0) {
+        if (!teclaSpacePresionada) {
 
-            stamina--;            // gasta 1 de verdad
-            vel.y = -fuerzaSalto; // salto
+            if (stamina > 0) {
+                stamina--;            // gasto de stamina real
+                vel.y = -fuerzaSalto; // salto simple
+            }
+
+            teclaSpacePresionada = true;
         }
-
-        teclaSpacePresionada = true;
     }
-}
-
 
     public void soltarSpace() {
         teclaSpacePresionada = false;
@@ -161,38 +170,36 @@ public void presionarSpace() {
     // ============================================================
     // ------------------ ACTUALIZAR FÍSICA ------------------------
     // ============================================================
-    // dt en segundos. Aquí aplicamos:
-    //  1) el empujeAbajo constante (pvector),
-    //  2) la velocidad actual (vel) que contiene el salto,
-    //  3) límites de techo y piso,
-    //  4) atenuación simple de la velocidad para que no quede "pegada".
+
+    /*
+       Matemática usada:
+       - empujeAbajo (px/s) * dt → desplazamiento en px/frame
+       - vel += empuje
+       - pos += vel
+       - vel *= 0.9 (fricción/apagado)
+    */
+
     public void actualizarFisica(float dt) {
 
-        // 1) aplicar empuje abajo (empuje * dt como desplazamiento)
-        // usamos add( empujeAbajo * dt ) al vector de velocidad para integrarlo
-        // de forma simple (como si sumaras un pequeño desplazamiento hacia abajo cada frame).
+        // 1) gravedad real escalada por dt
         PVector downStep = empujeAbajo.copy();
-        downStep.mult(dt);         // convertimos px/s -> px para este frame
-        // sumarlo directamente a la posición produce un "arrastre" constante,
-        // pero lo hacemos a la velocidad para conservar la coherencia con el salto:
+        downStep.mult(dt);
         vel.add(downStep);
 
-        // 2) aplicar velocidad a la posición (vel es px para este frame si vel ya fue escalada, aquí vel representa px)
-        // Para mantenerlo sencillo: interpretamos vel como px/frame ya que empuje se escaló por dt.
+        // 2) movimiento
         pos.add(vel);
 
-        // 3) atenuar un poco la velocidad para evitar acumulaciones infinitas
+        // 3) fricción simple
         vel.mult(0.9f);
 
-        // 4) límites: piso y techo (no permitir salir)
-        if (pos.y > PISO) {
-            pos.y = PISO;
-            vel.y = 0;
-        }
+        // 4) límites físicos
+        if (pos.y > PISO) { pos.y = PISO; vel.y = 0; }
+        if (pos.y - alto < TECHO) { pos.y = TECHO + alto; vel.y = 0; }
 
-        if (pos.y - alto < TECHO) {
-            pos.y = TECHO + alto;
-            vel.y = 0;
+        // 5) sprite especial
+        if (tiempoSpriteEspecial > 0) {
+            tiempoSpriteEspecial -= dt;
+            if (tiempoSpriteEspecial <= 0) spriteActual = spriteNormal;
         }
     }
 
@@ -200,132 +207,119 @@ public void presionarSpace() {
     // ============================================================
     // ------------------ DIBUJAR BARRAS ---------------------------
     // ============================================================
-    // dibuja arriba a la izquierda: vida encima, stamina debajo
+
     public void dibujarBarras() {
 
-        // fondo gris para que se vea mejor (opcional)
+        /* Marco gris */
         noStroke();
         fill(40);
-        rect(12, 12, 220, 44, 6);
+        rect(12, 12, 220, 70, 6);   // ← aumentado a 70px para agregar textos
 
-        // Vida (rojo)
+        /* ---------------- VIDA ---------------- */
         fill(255, 0, 0);
-        rect(20, 20, vida * 2, 15);   // ancho proporcional a vida (0-100) -> 0-200px
+        rect(20, 20, vida * 2, 15);
 
-        // Stamina (azul) justo debajo
+        fill(255);
+        textSize(14);
+        text("Vida: " + vida, 50, height - 60);  // ← texto dentro del rect
+
+        /* ---------------- STAMINA ---------------- */
         fill(0, 150, 255);
-        // como staminaMax = 60, escalamos para que la barra tenga un tamaño razonable
-        float anchoStamina = map(stamina, 0, staminaMax, 0, 180); // 180px ancho máximo
+        float anchoStamina = map(stamina, 0, staminaMax, 0, 180);
         rect(20, 40, anchoStamina, 12);
+
+        fill(255);
+        text("Stamina: " + stamina, 50, height - 30);   // ← debajo de Vida
+
+        /* ---------------- CONTROLES ---------------- */
+        text("Controles: Z, X, SPACE", width - 100, height - 30);
     }
 
 
     // ============================================================
     // ------------------ DIBUJAR JUGADOR --------------------------
     // ============================================================
+
     public void dibujar() {
+
+        if (spriteActual != null) {
+            image(spriteActual, pos.x, pos.y - alto, ancho, alto);
+            return;
+        }
+
         fill(colorJugador);
         rect(pos.x, pos.y - alto, ancho, alto);
     }
 
 
     // ============================================================
-    // ---------- MÉTODOS ABSTRACTOS DE HABILIDADES ----------------
+    // -------- MÉTODOS ABSTRACTOS DE HABILIDADES -----------------
     // ============================================================
+
     protected abstract void habilidadZ();
     protected abstract void habilidadX();
-    
-    public void setVida(int v) {
-    vida = v;
-}
-
-public void setStamina(int s) {
-    stamina = s;
-}
-
-public void resetearPosicion() {
-    pos = new PVector(50, PISO);
-    vel = new PVector(0, 0);
-}
-
-public int getStamina() {
-    return stamina;
-}
-
-public void consumirStamina(int cantidad) {
-    stamina -= cantidad;
-    if (stamina < 0) stamina = 0;
-}
 
 
-// ============================================================
-// ACTIVAR INMUNIDAD POR "segundos"
-// ============================================================
-public void activarInmunidad(float segundos) {
-    esInvulnerable = true;
-    tiempoInvulnerableRestante = segundos;
-}
+    // ============================================================
+    // ---------------------- SETTERS EXTRA ------------------------
+    // ============================================================
 
-// ============================================================
-// ACTUALIZAR INMUNIDAD CADA FRAME
-// ============================================================
-public void actualizarInmunidad(float dt) {
+    public void setVida(int v) { vida = v; }
+    public void setStamina(int s) { stamina = s; }
 
-    if (!esInvulnerable) return;
-
-    tiempoInvulnerableRestante -= dt;
-
-    if (tiempoInvulnerableRestante <= 0) {
-        esInvulnerable = false;
-        tiempoInvulnerableRestante = 0;
+    public void resetearPosicion() {
+        pos = new PVector(50, PISO);
+        vel = new PVector(0, 0);
     }
-}
 
-public boolean estaInvulnerable() {
-    return esInvulnerable;
-}
+    public int getStamina() { return stamina; }
+
+    public void consumirStamina(int c) {
+        stamina -= c;
+        if (stamina < 0) stamina = 0;
+    }
+
+
+    // ============================================================
+    // ------------------- INVULNERABILIDAD -------------------------
+    // ============================================================
+
+    public void activarInmunidad(float segundos) {
+        esInvulnerable = true;
+        tiempoInvulnerableRestante = segundos;
+    }
+
+    public void actualizarInmunidad(float dt) {
+        if (!esInvulnerable) return;
+        tiempoInvulnerableRestante -= dt;
+        if (tiempoInvulnerableRestante <= 0) {
+            esInvulnerable = false;
+            tiempoInvulnerableRestante = 0;
+        }
+    }
+
+    public boolean estaInvulnerable() { return esInvulnerable; }
 
 
     // ============================================================
     // ------------------ CONTROLES JUGADOR ------------------------
     // ============================================================
-public void actualizarControles() {
 
-    // ----------------------- SALTO ------------------------
-    if (keyPressed && key == ' ') {
-        presionarSpace();
-    } else {
-        soltarSpace();
+    public void actualizarControles() {
+
+        // SALTO
+        if (keyPressed && key == ' ') presionarSpace();
+        else soltarSpace();
+
+        // HABILIDAD Z
+        if (keyPressed && (key == 'z' || key == 'Z')) {
+            if (!zPresionada) { habilidadZ(); zPresionada = true; }
+        } else zPresionada = false;
+
+        // HABILIDAD X
+        if (keyPressed && (key == 'x' || key == 'X')) {
+            if (!xPresionada) { habilidadX(); xPresionada = true; }
+        } else xPresionada = false;
     }
-
-    // --------------------- HABILIDAD Z ---------------------
-    if (keyPressed && (key == 'z' || key == 'Z')) {
-
-        if (!zPresionada) { 
-            // Se ejecuta una sola vez al presionar
-            habilidadZ();  
-            zPresionada = true;
-        }
-
-    } else {
-        // Se libera cuando la tecla Z deja de estar presionada
-        zPresionada = false;
-    }
-
-    // --------------------- HABILIDAD X ---------------------
-    if (keyPressed && (key == 'x' || key == 'X')) {
-
-        if (!xPresionada) { 
-            // Se ejecuta una sola vez al presionar
-            habilidadX();
-            xPresionada = true;
-        }
-
-    } else {
-        // Se libera cuando se suelta la tecla X
-        xPresionada = false;
-    }
-}
-
 
 }

@@ -1,50 +1,71 @@
-// ============================================================
-// ======================= NIVEL BASE ==========================
-// ============================================================
+/* ============================================================
+   =============== CLASE ABSTRACTA: NivelBase ==================
+   Clase base que define:
+   - Parallax
+   - Obstáculos
+   - Obstáculos vivos
+   - Items
+   - Lógica de victoria / derrota
+   - Tiempo y control de juego
+   ============================================================ */
 public abstract class NivelBase {
 
-    // ---------------- PARALLAX -----------------
+    /* ============================================================
+       =================== PARALLAX Y FONDOS =======================
+       ============================================================ */
+
+    /* Capas de parallax */
     protected ArrayList<Layer> fondos = new ArrayList<>();
 
-    // ---------------- TIEMPOS -------------------
+
+    /* ============================================================
+       ======================== TIEMPOS ============================
+       ============================================================ */
+
     protected float duracionNivel;
     protected float tiempoTranscurrido = 0;
 
     protected float tiempoEntreObstaculos;
     protected float tiempoDesdeUltimoSpawn = 0;
 
-    // ---------------- ESTADOS -------------------
+    protected float tiempoEntreObstaculosVivos = 3.0f;
+    protected float tiempoDesdeUltimoSpawnVivo = 0;
+
+    /* ---- Items ---- */
+    protected float tiempoEntreItems = 5f;
+    protected float tiempoDesdeUltimoItem = 0;
+
+
+    /* ============================================================
+       ========================= ESTADOS ===========================
+       ============================================================ */
+
     protected boolean completado = false;
     protected boolean irAVictoria = false;
     protected boolean irADerrota = false;
 
-    // ---------------- ENTIDADES -----------------
+
+    /* ============================================================
+       ========================= ENTIDADES =========================
+       ============================================================ */
+
     protected ArrayList<Obstaculo> obstaculos;
+    protected ArrayList<Item> items = new ArrayList<>();
+
     protected Jugador jugador;
     protected GestorJugadorActual gestorJugador;
 
-    // ---------------- MUSICA ---------------------
+
+    /* ============================================================
+       ========================== MUSICA ===========================
+       ============================================================ */
+
     protected String archivoMusica;
-    
-
-// ----------------- ÍTEMS -------------------
-protected ArrayList<Item> items = new ArrayList<>();
-
-protected float tiempoEntreItems = 5.0f; // cada cuántos segundos aparece 1 ítem
-protected float tiempoDesdeUltimoItem = 0;
 
 
-    
-    // Tiempo entre obstaculos vivos
-protected float tiempoEntreObstaculosVivos = 3.0f;
-protected float tiempoDesdeUltimoSpawnVivo = 0;
-
-
-
-
-    // ============================================================
-    // ----------------------- CONSTRUCTOR -------------------------
-    // ============================================================
+    /* ============================================================
+       ======================== CONSTRUCTOR ========================
+       ============================================================ */
     public NivelBase(
         float duracionNivel,
         float tiempoEntreObstaculos,
@@ -54,155 +75,160 @@ protected float tiempoDesdeUltimoSpawnVivo = 0;
         this.duracionNivel = duracionNivel;
         this.tiempoEntreObstaculos = tiempoEntreObstaculos;
         this.gestorJugador = gestorJugador;
-
-        this.jugador = gestorJugador.getJugador();
         this.archivoMusica = archivoMusica;
 
-        obstaculos = new ArrayList<>();
-        
+        /* Jugador del sistema */
+        this.jugador = gestorJugador.getJugador();
         jugador.asignarNivel(this);
 
+        /* Crear estructuras */
+        this.obstaculos = new ArrayList<>();
     }
 
 
 
-    // ============================================================
-    // ----------------------- PARALLAX SETUP ----------------------
-    // ============================================================
+    /* ============================================================
+       ===================== PARALLAX SETUP ========================
+       ============================================================ */
     public void cargarFondos(String[] archivos, float[] velocidades) {
+
         fondos.clear();
 
         for (int i = 0; i < archivos.length; i++) {
             fondos.add(new Layer(archivos[i], velocidades[i]));
         }
     }
-    
-    // ============================================================
-    // ----------------------- Crear Item ----------------------
-    // ============================================================
-    
-protected Item crearItem() {
-    return null; // por defecto no crea ninguno
-}
 
 
 
+    /* ============================================================
+       ======================== CREAR ITEM =========================
+       ============================================================ */
+    /* Método sobreescribible por los niveles */
+    protected Item crearItem() {
+        return null;
+    }
+
+    /* Método sobreescribible por niveles para obstáculos vivos */
+    protected Obstaculo crearObstaculoVivo() {
+        return null;
+    }
 
 
-    // ============================================================
-    // ------------------------- ACTUALIZAR ------------------------
-    // ============================================================
+    /* ============================================================
+       ======================== ACTUALIZAR =========================
+       ============================================================ */
     public void actualizar(float dt) {
 
-        // ---------------- Fondos (Parallax) -----------------
-        for (Layer l : fondos) {
-            l.update(dt);
+        /* -------------------- Actualizar fondos -------------------- */
+        for (Layer l : fondos) l.update(dt);
+
+
+        /* -------------------- Spawn de items ----------------------- */
+        tiempoDesdeUltimoItem += dt;
+
+        if (tiempoDesdeUltimoItem >= tiempoEntreItems) {
+
+            Item nuevo = crearItem();
+            if (nuevo != null) items.add(nuevo);
+
+            tiempoDesdeUltimoItem = 0;
         }
-        
-        // ------- Tiempo para ítems --------
-// Tiempo
-tiempoDesdeUltimoItem += dt;
-
-// Spawnear ítems
-if (tiempoDesdeUltimoItem >= tiempoEntreItems) {
-    items.add(crearItem());
-    tiempoDesdeUltimoItem = 0;
-}
 
 
-
-        // ---------------- Jugador ----------------
+        /* -------------------- Jugador -------------------------- */
         jugador.regenerarStamina(dt);
-
         jugador.actualizarControles();
         jugador.actualizarFisica(dt);
-        
         jugador.actualizarInmunidad(dt);
-        
 
 
-
-        // ---------------- Tiempo ------------------
+        /* -------------------- Tiempos -------------------------- */
         tiempoTranscurrido += dt;
         tiempoDesdeUltimoSpawn += dt;
         tiempoDesdeUltimoSpawnVivo += dt;
 
 
-        // ---------------- Spawnear obstáculos -----
+        /* -------------------- Obstáculos básicos ---------------- */
         if (tiempoDesdeUltimoSpawn >= tiempoEntreObstaculos) {
             obstaculos.add(crearObstaculo());
             tiempoDesdeUltimoSpawn = 0;
         }
-        
-// ---------------- Spawnear obstáculos vivos -----
-if (tiempoDesdeUltimoSpawnVivo >= tiempoEntreObstaculosVivos) {
-
-    obstaculos.add(crearObstaculoVivo());
-
-    tiempoDesdeUltimoSpawnVivo = 0;
-}
 
 
-        // ---------------- Obstáculos --------------
-for (int i = obstaculos.size() - 1; i >= 0; i--) {
+        /* -------------------- Obstáculos vivos ------------------ */
+        if (tiempoDesdeUltimoSpawnVivo >= tiempoEntreObstaculosVivos) {
 
-    Obstaculo o = obstaculos.get(i);
+            Obstaculo vivo = crearObstaculoVivo();
+            if (vivo != null) obstaculos.add(vivo);
 
-    if (o instanceof ObstaculoVivo) {
-        ((ObstaculoVivo)o).actualizar(dt, jugador);
-    } else {
-        o.actualizar(dt);
-    }
-
-    // colisión con jugador
-    if (o.colisionaConJugador(
-        jugador.getHitboxX(),
-        jugador.getHitboxY(),
-        jugador.getHitboxW(),
-        jugador.getHitboxH()
-    )) {
-        o.aplicarDañoSiCorresponde(jugador, tiempoTranscurrido);
-    }
-
-    // eliminar si se fue a la izquierda
-    if (o.fueraDePantalla()) {
-        obstaculos.remove(i);
-    }
-}
-
-// ---------------- ÍTEMS ----------------
-for (int i = items.size() - 1; i >= 0; i--) {
-
-    Item it = items.get(i);
-    it.actualizar(dt);
-
-    // colisión con jugador
-    if (it.colisionaConJugador(
-        jugador.getHitboxX(),
-        jugador.getHitboxY(),
-        jugador.getHitboxW(),
-        jugador.getHitboxH()
-    )) {
-
-        it.aplicarEfecto(jugador);
-        items.remove(i);
-        continue;
-    }
-
-    // eliminar si salió de pantalla
-    if (it.fueraDePantalla()) {
-        items.remove(i);
-    }
-}
-
-
-
-        // ---------------- Derrota ----------------
-        if (jugador.getVida() <= 0) {
-            irADerrota = true;
+            tiempoDesdeUltimoSpawnVivo = 0;
         }
 
-        // ---------------- Victoria ----------------
+
+        /* ============================================================
+           =============== ACTUALIZAR OBSTÁCULOS ======================
+           ============================================================ */
+
+        for (int i = obstaculos.size() - 1; i >= 0; i--) {
+
+            Obstaculo o = obstaculos.get(i);
+
+            /* Si es vivo usa IA */
+            if (o instanceof ObstaculoVivo) {
+                ((ObstaculoVivo) o).actualizar(dt, jugador);
+            } else {
+                o.actualizar(dt);
+            }
+
+            /* ------------ Colisión con jugador ------------ */
+            if (o.colisionaConJugador(
+                jugador.getHitboxX(),
+                jugador.getHitboxY(),
+                jugador.getHitboxW(),
+                jugador.getHitboxH()
+            )) {
+                o.aplicarDañoSiCorresponde(jugador, tiempoTranscurrido);
+            }
+
+            /* ------------ Si salió de pantalla ------------ */
+            if (o.fueraDePantalla()) {
+                obstaculos.remove(i);
+            }
+        }
+
+
+        /* ============================================================
+           ======================== ÍTEMS ==============================
+           ============================================================ */
+
+        for (int i = items.size() - 1; i >= 0; i--) {
+
+            Item it = items.get(i);
+            it.actualizar(dt);
+
+            /* Colisión */
+            if (it.colisionaConJugador(
+                jugador.getHitboxX(),
+                jugador.getHitboxY(),
+                jugador.getHitboxW(),
+                jugador.getHitboxH()
+            )) {
+                it.aplicarEfecto(jugador);
+                items.remove(i);
+                continue;
+            }
+
+            if (it.fueraDePantalla()) items.remove(i);
+        }
+
+
+        /* ============================================================
+           ================= VICTORIA / DERROTA =======================
+           ============================================================ */
+
+        if (jugador.getVida() <= 0) irADerrota = true;
+
         if (tiempoTranscurrido >= duracionNivel && jugador.getVida() > 0) {
             completado = true;
             irAVictoria = true;
@@ -210,204 +236,188 @@ for (int i = items.size() - 1; i >= 0; i--) {
     }
 
 
-protected Obstaculo crearObstaculoVivo() {
-    return null; // por defecto ningún nivel usa obstáculos vivos
-}
 
-
-
-    // ============================================================
-    // --------------------------- DIBUJAR -------------------------
-    // ============================================================
+    /* ============================================================
+       =========================== DIBUJAR =========================
+       ============================================================ */
     public void dibujar() {
 
-        // ---------- Fondos (Parallax) --------------
-        for (Layer l : fondos) {
-            l.display();
-        }
-        
-                // ---------- Dibyujar Items --------------
-for (Item it : items) {
-    it.dibujar();
-}
+        /* Fondos */
+        for (Layer l : fondos) l.display();
 
+        /* Items */
+        for (Item it : items) it.dibujar();
 
-        // ---------- Piso y techo -------------------
+        /* Piso y techo */
         fill(0);
         rect(0, Jugador.PISO, width, 100);
         rect(0, Jugador.TECHO, width, -100);
 
-        // ---------- Jugador ------------------------
-jugador.dibujar();
+        /* Jugador */
+        jugador.dibujar();
+        jugador.dibujarBarras();
 
-// ---------- HUD (Jugador) ------------------
-jugador.dibujarBarras();
+        /* Obstáculos */
+        for (Obstaculo o : obstaculos) o.dibujar();
 
-
-
-        // ---------- Obstáculos ---------------------
-        for (Obstaculo o : obstaculos) {
-            o.dibujar();
-        }
-
-        // ---------- HUD ----------------------------
+        /* HUD */
         fill(255);
         textSize(20);
-        text("Vida: " + jugador.getVida(), 80, 40);
+        
         text("Tiempo: " + int(duracionNivel - tiempoTranscurrido), width - 150, 40);
     }
 
 
 
-    // ============================================================
-    // --------------------------- ESTADOS -------------------------
-    // ============================================================
+    /* ============================================================
+       ====================== MÉTODOS DE ESTADO ====================
+       ============================================================ */
     public boolean debeIrAVictoria() { return irAVictoria; }
     public boolean debeIrADerrota() { return irADerrota; }
     public boolean fueCompletado() { return completado; }
-    
-    // ============================================================
-// ELIMINAR OBSTÁCULOS CERCA DEL JUGADOR
-// ============================================================
-public void eliminarObstaculosCercanos(Jugador jugador, float rango) {
 
-    for (int i = obstaculos.size() - 1; i >= 0; i--) {
 
-        Obstaculo o = obstaculos.get(i);
 
-        // distancia simple con matemática básica
-        float dx = abs(o.getX() - jugador.getHitboxX());
-        float dy = abs(o.getY() - jugador.getHitboxY());
+    /* ============================================================
+       ============ MÉTODOS DE HABILIDADES ESPECIALES =============
+       ============================================================ */
 
-        // si está dentro del rango → eliminar
-        if (dx <= rango && dy <= rango) {
-            obstaculos.remove(i);
-        }
-    }
-}
+    /* ------------------------------------------------------------
+       Eliminar obstáculos en un rango cuadrado usando PVector
+       ------------------------------------------------------------ */
+    public void eliminarObstaculosCercanos(Jugador jugador, float rango) {
 
-// ============================================================
-// ELIMINAR SOLO EL OBSTÁCULO MÁS CERCANO AL JUGADOR
-// ============================================================
-public void eliminarObstaculoMasCercano(Jugador jugador) {
+        PVector centro = new PVector(jugador.getHitboxX(), jugador.getHitboxY());
 
-    if (obstaculos.isEmpty()) return;
+        for (int i = obstaculos.size() - 1; i >= 0; i--) {
 
-    Obstaculo objetivo = null;
-    float distanciaMinima = Float.MAX_VALUE;
+            Obstaculo o = obstaculos.get(i);
+            PVector pos = new PVector(o.getX(), o.getY());
 
-    for (Obstaculo o : obstaculos) {
-
-        float dx = abs(o.getX() - jugador.getHitboxX());
-        float dy = abs(o.getY() - jugador.getHitboxY());
-        float distancia = dx + dy; // distancia simple
-
-        if (distancia < distanciaMinima) {
-            distanciaMinima = distancia;
-            objetivo = o;
+            if (PVector.dist(pos, centro) <= rango) {
+                obstaculos.remove(i);
+            }
         }
     }
 
-    // eliminar el objetivo encontrado
-    if (objetivo != null) {
-        obstaculos.remove(objetivo);
+
+
+    /* ------------------------------------------------------------
+       Eliminar el obstáculo más cercano
+       ------------------------------------------------------------ */
+    public void eliminarObstaculoMasCercano(Jugador jugador) {
+
+        if (obstaculos.isEmpty()) return;
+
+        PVector centro = new PVector(jugador.getHitboxX(), jugador.getHitboxY());
+
+        Obstaculo objetivo = null;
+        float distanciaMin = Float.MAX_VALUE;
+
+        for (Obstaculo o : obstaculos) {
+
+            PVector pos = new PVector(o.getX(), o.getY());
+            float d = PVector.dist(pos, centro);
+
+            if (d < distanciaMin) {
+                distanciaMin = d;
+                objetivo = o;
+            }
+        }
+
+        if (objetivo != null) obstaculos.remove(objetivo);
     }
-}
 
-// ============================================================
-// ELIMINAR OBSTÁCULOS EN RANGO AMPLIO (HABILIDAD X CABALLERO)
-// ============================================================
-public void eliminarObstaculosEnRangoCaballero(Jugador jugador) {
 
-    float rangoY = jugador.getAlto() * 2; // dos veces el alto del jugador
-    float rangoX = 1000;                   // 1000 px hacia adelante
 
-    float jx = jugador.getHitboxX();
-    float jy = jugador.getHitboxY();
+    /* ------------------------------------------------------------
+       Caballero: elimina obstáculos en un rango delantero
+       ------------------------------------------------------------ */
+    public void eliminarObstaculosEnRangoCaballero(Jugador jugador) {
 
-    for (int i = obstaculos.size() - 1; i >= 0; i--) {
+        PVector centro = new PVector(jugador.getHitboxX(), jugador.getHitboxY());
 
-        Obstaculo o = obstaculos.get(i);
+        float rangoX = 1000;
+        float rangoY = jugador.getAlto() * 2;
 
-        float dx = o.getX() - jx;     // IMPORTANTE: solo obstáculos delante
-        float dy = abs(o.getY() - jy);
+        for (int i = obstaculos.size() - 1; i >= 0; i--) {
 
-        // condición: delante y dentro de la ventana definida
-        if (dx >= 0 && dx <= rangoX && dy <= rangoY) {
-            obstaculos.remove(i);
+            Obstaculo o = obstaculos.get(i);
+            PVector pos = new PVector(o.getX(), o.getY());
+
+            float dx = pos.x - centro.x;
+            float dy = abs(pos.y - centro.y);
+
+            if (dx >= 0 && dx <= rangoX && dy <= rangoY) {
+                obstaculos.remove(i);
+            }
         }
     }
-}
 
-// ============================================================
-// ELIMINAR LOS 4 OBSTÁCULOS MÁS CERCANOS (HABILIDAD X ARQUERO)
-// ============================================================
-public void eliminar4ObstaculosMasCercanos(Jugador jugador) {
 
-    if (obstaculos.isEmpty()) return;
 
-    // Lista temporal con distancias
-    ArrayList<Obstaculo> copia = new ArrayList<>(obstaculos);
+    /* ------------------------------------------------------------
+       Arquero: elimina 4 obstáculos más cercanos
+       ------------------------------------------------------------ */
+    public void eliminar4ObstaculosMasCercanos(Jugador jugador) {
 
-    // Ordenar por distancia al jugador (ascendente)
-    copia.sort((a, b) -> {
+        if (obstaculos.isEmpty()) return;
 
-        float da = abs(a.getX() - jugador.getHitboxX()) + 
-                   abs(a.getY() - jugador.getHitboxY());
+        PVector centro = new PVector(jugador.getHitboxX(), jugador.getHitboxY());
 
-        float db = abs(b.getX() - jugador.getHitboxX()) + 
-                   abs(b.getY() - jugador.getHitboxY());
+        ArrayList<Obstaculo> copia = new ArrayList<>(obstaculos);
 
-        return Float.compare(da, db);
-    });
+        copia.sort((a, b) -> {
+            float da = PVector.dist(new PVector(a.getX(), a.getY()), centro);
+            float db = PVector.dist(new PVector(b.getX(), b.getY()), centro);
+            return Float.compare(da, db);
+        });
 
-    // Eliminar hasta 4 obstáculos si existen
-    int cantidad = min(4, copia.size());
+        int cantidad = min(4, copia.size());
 
-    for (int i = 0; i < cantidad; i++) {
-        obstaculos.remove(copia.get(i));
+        for (int i = 0; i < cantidad; i++) obstaculos.remove(copia.get(i));
     }
-}
 
-// ============================================================
-// ELIMINAR LOS 20 OBSTÁCULOS MÁS CERCANOS (HABILIDAD X - MAGO)
-// ============================================================
-public void eliminar20ObstaculosMasCercanos(Jugador jugador) {
 
-    if (obstaculos.isEmpty()) return;
 
-    // Crear copia para ordenar
-    ArrayList<Obstaculo> copia = new ArrayList<>(obstaculos);
+    /* ------------------------------------------------------------
+       Mago: elimina 20 obstáculos más cercanos
+       ------------------------------------------------------------ */
+    public void eliminar20ObstaculosMasCercanos(Jugador jugador) {
 
-    // Orden por distancia al jugador
-    copia.sort((a, b) -> {
+        if (obstaculos.isEmpty()) return;
 
-        float da = abs(a.getX() - jugador.getHitboxX()) + 
-                   abs(a.getY() - jugador.getHitboxY());
+        PVector centro = new PVector(jugador.getHitboxX(), jugador.getHitboxY());
 
-        float db = abs(b.getX() - jugador.getHitboxX()) + 
-                   abs(b.getY() - jugador.getHitboxY());
+        ArrayList<Obstaculo> copia = new ArrayList<>(obstaculos);
 
-        return Float.compare(da, db);
-    });
+        copia.sort((a, b) -> {
+            float da = PVector.dist(new PVector(a.getX(), a.getY()), centro);
+            float db = PVector.dist(new PVector(b.getX(), b.getY()), centro);
+            return Float.compare(da, db);
+        });
 
-    // Eliminar hasta 20 obstáculos
-    int cantidad = min(20, copia.size());
+        int cantidad = min(20, copia.size());
 
-    for (int i = 0; i < cantidad; i++) {
-        obstaculos.remove(copia.get(i));
+        for (int i = 0; i < cantidad; i++) obstaculos.remove(copia.get(i));
     }
-}
-
-//invocar dragon
-
-public void agregarObstaculo(Obstaculo o) {
-    obstaculos.add(o);
-}
 
 
 
+    /* ============================================================
+       ====================== AGREGAR OBSTÁCULO ====================
+       ============================================================ */
+    public void agregarObstaculo(Obstaculo o) {
+        obstaculos.add(o);
+    }
+
+
+
+    /* ============================================================
+       ========================== REINICIAR =========================
+       ============================================================ */
     public void reiniciar() {
+
         tiempoTranscurrido = 0;
         tiempoDesdeUltimoSpawn = 0;
 
@@ -424,9 +434,8 @@ public void agregarObstaculo(Obstaculo o) {
     }
 
 
-
-    // ============================================================
-    // ----------- MÉTODO ABSTRACTO (fabricar obstáculo) ----------
-    // ============================================================
+    /* ============================================================
+       =========== MÉTODO ABSTRACTO: fabricar obstáculo ============
+       ============================================================ */
     protected abstract Obstaculo crearObstaculo();
 }

@@ -1,137 +1,176 @@
-// ====================================================
-// SCRIPT PRINCIPAL – MAQUINA DE ESTADOS SIMPLE
-// ====================================================
+/* 
+============================================================
+==================== SCRIPT PRINCIPAL ======================
+==================== MAQUINA DE ESTADOS ====================
+============================================================
 
-// Importamos librería de sonido
+Este archivo es el "núcleo" del juego en Processing.
+NO trabaja con Pvectors (/* no usa Pvectors porque es un
+controlador general, no un objeto espacial */
+/*
+Es una clase dependiente: 
+• Depende de múltiples escenas y clases externas.
+• Maneja la máquina de estados del juego.
+• Controla deltaTime, pausas, clics y sonidos.
+
+Todo está separado por bloques y comentado.
+============================================================
+*/
+
+// ---------------------------------------------------------
+// 🔹 IMPORTS EXTERNOS (LIBRERÍAS NECESARIAS)
+// ---------------------------------------------------------
 import processing.sound.*;
 
-private boolean juegoPausado = false;
 
-// ===============================
-// 🔹 OBJETOS PRINCIPALES
-// ===============================
-private GestorSonidos sonidos;
-private MenuPrincipal menu;
-private EscenaAjustes ajustes;
-private EscenaPersonalizacion personalizacion;
-private EscenaMenuNiveles menuniveles;
+// ---------------------------------------------------------
+// 🔹 VARIABLES DE ESTADO Y CONTROL DEL JUEGO
+// ---------------------------------------------------------
 
-// 🔹 Estado actual del juego (enum definido por ti)
+private boolean juegoPausado = false;   /* Activa/desactiva lógica interna */
+
+// Estado actual de la máquina de estados
 private EstadoJuego estadoActual;
 
-private GestorJugadorActual gestorJugador;
 
-private NivelBase nivelActual;
+// ---------------------------------------------------------
+// 🔹 OBJETOS PRINCIPALES DEL JUEGO
+// ---------------------------------------------------------
+
+private GestorSonidos sonidos;              /* Controla música y efectos */
+private MenuPrincipal menu;                 /* Pantalla principal */
+private EscenaAjustes ajustes;              /* Menú de ajustes */
+private EscenaPersonalizacion personalizacion;
+private EscenaMenuNiveles menuniveles;
 
 private EscenaVictoria escenaVictoria;
 private EscenaDerrota escenaDerrota;
 
+private NovelaInicio novelaInicio;
+private NovelaFinal novelaFinal;
+
+private GestorJugadorActual gestorJugador;
+
+private NivelBase nivelActual;              /* Polimorfismo: puede ser Nivel1/2/3 */
+
+
+// ---------------------------------------------------------
+// 🔹 VARIABLES PARA DELTATIME
+// ---------------------------------------------------------
+
+private float deltaTime;       /* tiempo entre frames */
+private int tiempoPrevio;      /* último millis registrado */
 
 
 
-
-
-// ===============================
-// 🔹 VARIABLES DELTATIME
-// ===============================
-private float deltaTime;       // tiempo entre frames
-private int tiempoPrevio;      // guarda millis del frame anterior
+// =========================================================
+// =========================== SETUP ========================
+// =========================================================
 
 void setup() {
+
   size(1000, 600);
+  frameRate(30);         /* EDITABLE: cambia FPS */
 
   tiempoPrevio = millis();
-  
-  frameRate(30);   // ← AJUSTA AQUÍ A TU FPS DESEADOS
 
+  // ---------- Inicializar sistemas principales ----------
   sonidos = new GestorSonidos(this);
-
-  // AHORA sí crear las escenas
-  menu = new MenuPrincipal(sonidos);
-  ajustes = new EscenaAjustes(sonidos);
   gestorJugador = new GestorJugadorActual();
+
+  // ---------- Crear escenas ----------
+  menu            = new MenuPrincipal(sonidos);
+  ajustes         = new EscenaAjustes(sonidos);
   personalizacion = new EscenaPersonalizacion(sonidos, gestorJugador);
+  menuniveles     = new EscenaMenuNiveles(sonidos);
 
-  menuniveles = new EscenaMenuNiveles(sonidos);
-  
-  escenaVictoria = new EscenaVictoria(sonidos);
-  escenaDerrota = new EscenaDerrota(sonidos);
+  escenaVictoria  = new EscenaVictoria(sonidos);
+  escenaDerrota   = new EscenaDerrota(sonidos);
 
+  novelaInicio    = new NovelaInicio(sonidos);
+  novelaFinal     = new NovelaFinal(sonidos);
 
-
-  estadoActual = EstadoJuego.MENU;
+  estadoActual = EstadoJuego.MENU;   /* Estado inicial */
 }
 
 
+
+// =========================================================
+// ============================ DRAW ========================
+// =========================================================
+
 void draw() {
 
-  // ===============================
-  // 🔹 CALCULAR DELTATIME
-  // ===============================
+  /* --------------------------------
+     CALCULAR DELTATIME
+     -------------------------------- */
   int tiempoActual = millis();
   float dt = (tiempoActual - tiempoPrevio) / 1000.0;
   tiempoPrevio = tiempoActual;
 
-  if (!juegoPausado) {
-    deltaTime = dt;   // normal
-  } else {
-    deltaTime = 0;    // congelado
+  deltaTime = (juegoPausado ? 0 : dt);
+
+
+  /* --------------------------------
+     MAQUINA DE ESTADOS PRINCIPAL
+     -------------------------------- */
+
+  switch (estadoActual) {
+
+    case MENU:
+      menu.dibujar(deltaTime);
+      break;
+
+    case AJUSTES:
+      ajustes.dibujar(deltaTime);
+      break;
+
+    case PERSONALIZACION:
+      personalizacion.dibujar(deltaTime);
+      break;
+
+    case MENUNIVELES:
+      menuniveles.dibujar(deltaTime);
+      break;
+
+    case NOVELAINICIO:
+      novelaInicio.dibujar();
+      break;
+
+    case NOVELAFINAL:
+      novelaFinal.dibujar();
+      break;
+
+    case NIVEL1:
+    case NIVEL2:
+    case NIVEL3:
+      manejarNivel(dt);
+      break;
+
+    case PAUSA:
+      dibujarPausa();
+      break;
+
+    case VICTORIA:
+      escenaVictoria.dibujar(dt);
+      break;
+
+    case DERROTA:
+      escenaDerrota.dibujar(dt);
+      break;
   }
+}
 
 
-  // ===============================
-  // 🔹 MAQUINA DE ESTADOS
-  // ===============================
 
-  if (estadoActual == EstadoJuego.MENU) {
-    menu.dibujar(deltaTime);
-  }
+// =========================================================
+// ================ MANEJO DE NIVELES =======================
+// =========================================================
 
-  else if (estadoActual == EstadoJuego.AJUSTES) {
-    ajustes.dibujar(deltaTime);
-  }
+/* Se extrae a una función para reducir repetición */
+private void manejarNivel(float dt) {
 
-  else if (estadoActual == EstadoJuego.PERSONALIZACION) {
-    personalizacion.dibujar(deltaTime);
-  }
-
-  else if (estadoActual == EstadoJuego.MENUNIVELES) {
-    menuniveles.dibujar(deltaTime);
-  }
-
-  else if (estadoActual == EstadoJuego.NIVEL1) {
-
-    nivelActual.actualizar(deltaTime);
-    nivelActual.dibujar();
-
-    if (nivelActual.debeIrAVictoria()) {
-      sonidos.detenerMusicaActual();  // ←← DETENER MÚSICA DEL NIVEL
-      estadoActual = EstadoJuego.VICTORIA;
-      sonidos.reproducirMusicaMenu();
-    }
-    else if (nivelActual.debeIrADerrota()) {
-      sonidos.detenerMusicaActual();  // ←← DETENER MÚSICA DEL NIVEL
-      estadoActual = EstadoJuego.DERROTA;
-      sonidos.reproducirMusicaMenu();
-    }
-  } else if (estadoActual == EstadoJuego.NIVEL2) {
-
-  nivelActual.actualizar(deltaTime);
-  nivelActual.dibujar();
-
-  if (nivelActual.debeIrAVictoria()) {
-    sonidos.detenerMusicaActual();
-    estadoActual = EstadoJuego.VICTORIA;
-    sonidos.reproducirMusicaMenu();
-  }
-  else if (nivelActual.debeIrADerrota()) {
-    sonidos.detenerMusicaActual();
-    estadoActual = EstadoJuego.DERROTA;
-    sonidos.reproducirMusicaMenu();
-  }
-} else if (estadoActual == EstadoJuego.NIVEL3) {
-
-  nivelActual.actualizar(deltaTime);
+  nivelActual.actualizar(dt);
   nivelActual.dibujar();
 
   if (nivelActual.debeIrAVictoria()) {
@@ -148,47 +187,54 @@ void draw() {
 
 
 
-  else if (estadoActual == EstadoJuego.PAUSA) {
+// =========================================================
+// ========================= PAUSA =========================
+// =========================================================
 
-    // 🔹 Dibujar el nivel congelado
-    nivelActual.dibujar();
+private void dibujarPausa() {
 
-    // 🔹 Overlay oscuro
-    fill(0, 150);
-    rect(0, 0, width, height);
+  nivelActual.dibujar();     /* Se dibuja congelado */
 
-    // 🔹 Texto PAUSA
-    fill(255);
-    textAlign(CENTER, CENTER);
-    textSize(70);
-    text("PAUSE", width / 2, height / 2);
+  fill(0, 150);
+  rect(0, 0, width, height);
 
-    textSize(25);
-    text("Pulsa ESC para continuar", width / 2, height / 2 + 60);
-  }
+  fill(255);
+  textAlign(CENTER, CENTER);
+  textSize(70);
+  text("PAUSE", width/2, height/2);
 
-  else if (estadoActual == EstadoJuego.VICTORIA) {
-    escenaVictoria.dibujar(deltaTime);
-  }
-
-  else if (estadoActual == EstadoJuego.DERROTA) {
-    escenaDerrota.dibujar(deltaTime);
-  }
+  textSize(25);
+  text("Pulsa ESC para continuar", width/2, height/2 + 60);
 }
 
+
+
+// =========================================================
+// ======================== KEY PRESSED ====================
+// =========================================================
 
 void keyPressed() {
+
   if (key == ESC) {
-    key = 0; // evita que Processing cierre el sketch
-    
-    if (estadoActual == EstadoJuego.NIVEL1) {
-      estadoActual = EstadoJuego.PAUSA;
+
+    key = 0; /* evita que Processing cierre */
+
+    if (estadoActual == EstadoJuego.NIVEL1 ||
+        estadoActual == EstadoJuego.NIVEL2 ||
+        estadoActual == EstadoJuego.NIVEL3) {
+
       juegoPausado = true;
+      estadoActual = EstadoJuego.PAUSA;
       sonidos.pausar();
     }
+
     else if (estadoActual == EstadoJuego.PAUSA) {
-      estadoActual = EstadoJuego.NIVEL1;
       juegoPausado = false;
+
+      if (nivelActual instanceof Nivel1) estadoActual = EstadoJuego.NIVEL1;
+      if (nivelActual instanceof Nivel2) estadoActual = EstadoJuego.NIVEL2;
+      if (nivelActual instanceof Nivel3) estadoActual = EstadoJuego.NIVEL3;
+
       sonidos.reanudar();
     }
   }
@@ -196,14 +242,15 @@ void keyPressed() {
 
 
 
-// ====================================================
-// 🔹 MANEJO DE CLICK SEGÚN ESTADO
-// ====================================================
+// =========================================================
+// ======================== MOUSE PRESSED ==================
+// =========================================================
+
 void mousePressed() {
 
-  // -------------------------------
-  // 📌 ESTADO: MENÚ PRINCIPAL
-  // -------------------------------
+  /* ----------------------------------------------------
+     MENU PRINCIPAL
+     ---------------------------------------------------- */
   if (estadoActual == EstadoJuego.MENU) {
 
     String accion = menu.detectarAccion();
@@ -211,94 +258,123 @@ void mousePressed() {
     if (accion == "AJUSTES") {
       estadoActual = EstadoJuego.AJUSTES;
       sonidos.reproducirMusicaPersonalizacion();
-
-    } else if (accion == "PERSONALIZAR") {
+    }
+    else if (accion == "PERSONALIZAR") {
       estadoActual = EstadoJuego.PERSONALIZACION;
       sonidos.reproducirMusicaAjustes();
-
-    } else if (accion == "MENUNIVELES") {
+    }
+    else if (accion == "MENUNIVELES") {
       estadoActual = EstadoJuego.MENUNIVELES;
       sonidos.reproducirMusicaNiveles();
     }
   }
 
-  // -------------------------------
-  // 📌 ESTADO: AJUSTES
-  // -------------------------------
+
+  /* ----------------------------------------------------
+     AJUSTES
+     ---------------------------------------------------- */
   else if (estadoActual == EstadoJuego.AJUSTES) {
-    String accion = ajustes.detectarAccion();
-    if (accion == "VOLVER") {
+    if (ajustes.detectarAccion() == "VOLVER") {
       estadoActual = EstadoJuego.MENU;
       sonidos.reproducirMusicaMenu();
     }
   }
 
-  // -------------------------------
-  // 📌 PERSONALIZACIÓN
-  // -------------------------------
+
+  /* ----------------------------------------------------
+     PERSONALIZACIÓN
+     ---------------------------------------------------- */
   else if (estadoActual == EstadoJuego.PERSONALIZACION) {
-    String accion = personalizacion.detectarAccion();
-    if (accion == "VOLVER") {
+    if (personalizacion.detectarAccion() == "VOLVER") {
       estadoActual = EstadoJuego.MENU;
       sonidos.reproducirMusicaMenu();
     }
   }
-  
-    // -------------------------------
-  // 📌 VICTORIA DERROTA
-  // -------------------------------
-  
-else if (estadoActual == EstadoJuego.VICTORIA) {
 
-  String accion = escenaVictoria.detectarAccion();
-  sonidos.detenerMusicaActual();
 
-  if (accion == "VOLVER") {
-    estadoActual = EstadoJuego.MENUNIVELES;
-    sonidos.reproducirMusicaNiveles();
+  /* ----------------------------------------------------
+     NOVELAS
+     ---------------------------------------------------- */
+  else if (estadoActual == EstadoJuego.NOVELAINICIO) {
+    if (novelaInicio.detectarAccion() == "VOLVER_MENUNIVELES")
+      estadoActual = EstadoJuego.MENUNIVELES;
   }
-}
 
-else if (estadoActual == EstadoJuego.DERROTA) {
- sonidos.detenerMusicaActual();
-
-  String accion = escenaDerrota.detectarAccion();
-  if (accion == "VOLVER") {
-    estadoActual = EstadoJuego.MENUNIVELES;
-    sonidos.reproducirMusicaNiveles();
+  else if (estadoActual == EstadoJuego.NOVELAFINAL) {
+    if (novelaFinal.detectarAccion() == "VOLVER_MENUNIVELES")
+      estadoActual = EstadoJuego.MENUNIVELES;
   }
-}
 
 
 
+  /* ----------------------------------------------------
+     VICTORIA / DERROTA
+     ---------------------------------------------------- */
+  else if (estadoActual == EstadoJuego.VICTORIA) {
+    sonidos.detenerMusicaActual();
+    if (escenaVictoria.detectarAccion() == "VOLVER") {
+      estadoActual = EstadoJuego.MENUNIVELES;
+      sonidos.reproducirMusicaNiveles();
+    }
+  }
 
-  // -------------------------------
-  // 📌 MENÚ DE NIVELES
-  // -------------------------------
+  else if (estadoActual == EstadoJuego.DERROTA) {
+    sonidos.detenerMusicaActual();
+    if (escenaDerrota.detectarAccion() == "VOLVER") {
+      estadoActual = EstadoJuego.MENUNIVELES;
+      sonidos.reproducirMusicaNiveles();
+    }
+  }
+
+
+
+  /* ----------------------------------------------------
+     MENÚ DE NIVELES
+     ---------------------------------------------------- */
   else if (estadoActual == EstadoJuego.MENUNIVELES) {
+
     String accion = menuniveles.detectarAccion();
+
     if (accion == "VOLVER") {
       estadoActual = EstadoJuego.MENU;
       sonidos.reproducirMusicaMenu();
-    } else if (accion == "NIVEL1") {
-  nivelActual = new Nivel1(gestorJugador);  // crea el nivel
-  nivelActual.reiniciar();                 // ← ← ← SUPER IMPORTANTE
-  estadoActual = EstadoJuego.NIVEL1;        // cambia de pantalla
-  sonidos.reproducirMusicaNivel(nivelActual.archivoMusica);
+    }
 
-} else if (accion == "NIVEL2") {
-  nivelActual = new Nivel2(gestorJugador);
-  nivelActual.reiniciar();
-  estadoActual = EstadoJuego.NIVEL2;
-  sonidos.reproducirMusicaNivel(nivelActual.archivoMusica);
-} else if (accion == "NIVEL3") {
-  nivelActual = new Nivel3(gestorJugador);
-  nivelActual.reiniciar();
-  estadoActual = EstadoJuego.NIVEL3;
-  sonidos.reproducirMusicaNivel(nivelActual.archivoMusica);
+    else if (accion == "NIVEL1") {
+      cargarNivel(new Nivel1(gestorJugador), EstadoJuego.NIVEL1);
+    }
+
+    else if (accion == "NIVEL2") {
+      cargarNivel(new Nivel2(gestorJugador), EstadoJuego.NIVEL2);
+    }
+
+    else if (accion == "NIVEL3") {
+      cargarNivel(new Nivel3(gestorJugador), EstadoJuego.NIVEL3);
+    }
+
+    else if (accion == "HISTORIA") {
+      estadoActual = EstadoJuego.NOVELAINICIO;
+      sonidos.reproducirMusicaNovela();
+    }
+
+    else if (accion == "FINAL") {
+      estadoActual = EstadoJuego.NOVELAFINAL;
+      sonidos.reproducirMusicaNovelaFinal();
+    }
+  }
 }
 
 
 
-  }
+// =========================================================
+// ================== Cargar Niveles (FUNCION) =============
+// =========================================================
+
+private void cargarNivel(NivelBase nivel, EstadoJuego estadoDestino) {
+
+  nivelActual = nivel;
+  nivelActual.reiniciar();               /* obligatorio */
+  estadoActual = estadoDestino;
+
+  sonidos.reproducirMusicaNivel(nivelActual.archivoMusica);
 }

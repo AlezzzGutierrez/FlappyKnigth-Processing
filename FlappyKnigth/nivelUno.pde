@@ -1,165 +1,172 @@
-
+/* ============================================================
+   CLASE: Nivel1
+   Nivel concreto del juego
+   Hereda comportamiento base de NivelBase y agrega:
+   - Obstáculos básicos
+   - Obstáculos vivos
+   - Obstáculos que caen desde arriba
+   - Items (vida y stamina)
+   ============================================================ */
 public class Nivel1 extends NivelBase {
 
-    // -------- CONFIGURACIÓN DEL SPAWNER ---------
-    private boolean usarSpawner = true;
-    private float tiempoAparicionSpawner = 30;
+    /* ============================================================
+       ===================== CONFIGURACIÓN =========================
+       ============================================================ */
 
-    private Spawner spawner = null;
-    private boolean spawnerCreado = false;
+    /* Intervalo entre obstáculos básicos */
+    private float intervaloObstaculos = 5.0f;
 
-    // -------- TIMERS GENERALES DE INVOCACIÓN ---------
-    private float tiempoGeneralSpawner = 0;
-    private float tiempoDesdeUltimaInvocacionGeneral = 0;
+    /* Intervalo entre obstáculos con IA (vivos) */
+    private float intervaloObstaculosVivos = 8.0f;
 
-    // -------- PACK DE 5 ENEMIGOS ---------
-    private boolean invocandoPack = false;
-    private int packInvocados = 0;
+    /* Intervalo entre obstáculos que caen verticalmente */
+    private float intervaloObstaculosQueCae = 6.0f;
 
-    // -------- OBSTÁCULO QUE CAE ---------
-    private float tiempoObstaculoCae = 0; // cada 8 segundos
+    /* Reloj interno para saber cuándo crear uno que cae */
+    private float timerObstaculoCae = 0;
 
+
+    /* ============================================================
+       ======================= CONSTRUCTOR =========================
+       ============================================================ */
     public Nivel1(GestorJugadorActual gestor) {
 
+        /* ------------------------------------------------------------
+           Llamada a la superclase con parámetros del nivel:
+           - duración total
+           - intervalo entre obstáculos básicos
+           - gestor del jugador actual
+           - música del nivel
+           ------------------------------------------------------------ */
         super(
-            60,       // duración del nivel
-            2.0f,     // spawn normal
+            30f,             /* duración del nivel      */
+            5.0f,            /* intervalo obst. básico  */
             gestor,
             "musica_nivel1.mp3"
         );
 
-        this.tiempoEntreObstaculosVivos = 3.0f;
+        /* Configurar intervalos heredados del NivelBase */
+        this.tiempoEntreObstaculosVivos = intervaloObstaculosVivos;
 
+        /* ------------------------------------------------------------
+           Fondos del nivel (parallax)
+           El primer parámetro es el archivo
+           El segundo es la velocidad relativa del fondo
+           ------------------------------------------------------------ */
         cargarFondos(
-            new String[]{
-                "bosque5.png",
-                "bosque4.png",
-                "bosque3.png",
-                "bosque2.png",
-                "bosque1.png"
-            },
-            new float[]{ -0.3f, -0.6f, -1.0f, -1.3f, -1.5f }
+            new String[]{ "bosque.png" },
+            new float[]{ -0.5f }
         );
     }
 
+
+    /* ============================================================
+       ======================= ACTUALIZAR ==========================
+       ============================================================ */
     @Override
     public void actualizar(float dt) {
 
+        /* ------------------------------------------------------------
+           Lógica principal del nivel:
+           - Obstáculos básicos
+           - Obstáculos vivos
+           - Items
+           Esto lo gestiona NivelBase automáticamente.
+           ------------------------------------------------------------ */
         super.actualizar(dt);
 
-        // ----------------- CREAR SPAWNER -----------------
-        if (usarSpawner && !spawnerCreado && tiempoTranscurrido >= tiempoAparicionSpawner) {
 
-            spawnerCreado = true;
+        /* ============================================================
+           ============= OBSTÁCULOS QUE CAEN DESDE ARRIBA ============
+           ============================================================ */
 
-            spawner = new Spawner(
-                800,
-                -200,
-                500
+        timerObstaculoCae += dt;
+
+        if (timerObstaculoCae >= intervaloObstaculosQueCae) {
+
+            timerObstaculoCae = 0;
+
+            /* --------------------------------------------------------
+               Se genera una posición aleatoria usando PVector
+               X aleatoria (fuera de la pantalla derecha)
+               Y: -100 (arriba del área visible)
+               -------------------------------------------------------- */
+            PVector pos = new PVector(
+                random(500, 1000),
+                -100
             );
-        }
 
-        // ----------------- ACTUALIZAR SPAWNER -----------------
-        if (spawner != null) {
-
-            spawner.actualizar(dt);
-
-            if (spawner.terminoEntrada()) {
-
-                tiempoGeneralSpawner += dt;
-                tiempoDesdeUltimaInvocacionGeneral += dt;
-
-                // ----------- CADA 10 SEG → iniciar pack de 5 -----------
-                if (!invocandoPack && tiempoGeneralSpawner >= 10.0f) {
-
-                    invocandoPack = true;
-                    packInvocados = 0;
-                    tiempoGeneralSpawner = 0;
-                }
-
-                // ----------- SPAWN DEL PACK DE 5 -----------
-                if (invocandoPack) {
-
-                    if (tiempoDesdeUltimaInvocacionGeneral >= 1.0f) {
-
-                        tiempoDesdeUltimaInvocacionGeneral = 0;
-
-                        agregarObstaculo(new ObstaculoVivoBasico(800, 300));
-                        packInvocados++;
-
-                        if (packInvocados >= 5) {
-                            invocandoPack = false;
-                        }
-                    }
-                }
-
-                // ----------- CADA 15 SEG → invoca 1 solo -----------
-                if (tiempoGeneralSpawner >= 15.0f) {
-
-                    agregarObstaculo(new ObstaculoVivoBasico(800, 300));
-                    tiempoGeneralSpawner = 0;
-                }
-            }
-        }
-
-        // ============================================================
-        // ====== SPAWN DEL OBSTÁCULO QUE CAE DESDE ARRIBA ============
-        // ============================================================
-        tiempoObstaculoCae += dt;
-
-        if (tiempoObstaculoCae >= 8.0f) {
-
-            tiempoObstaculoCae = 0;
-
-            float xRandom = random(500, 1000);
-
-            agregarObstaculo(new ObstaculoQueCae(xRandom, -100));
+            agregarObstaculo(new ObstaculoQueCae(pos.x, pos.y));
         }
     }
 
+
+    /* ============================================================
+       ========================= DIBUJAR ===========================
+       ============================================================ */
     @Override
     public void dibujar() {
+        /* Todo el render del nivel está en la superclase */
         super.dibujar();
-        if (spawner != null) spawner.dibujar();
     }
 
-    // ============================================================
-    // =============== OBSTÁCULO NORMAL HORIZONTAL ================
-    // ============================================================
+
+    /* ============================================================
+       =================== OBSTÁCULOS BASE =========================
+       ============================================================ */
+
+    /* Obstáculos normales */
     @Override
     protected Obstaculo crearObstaculo() {
 
+        /* Alturas válidas utilizando PISO y TECHO del jugador */
         float yMin = Jugador.TECHO + 30;
         float yMax = Jugador.PISO - 40;
 
-        return new ObstaculoBasico(width + 60, random(yMin, yMax));
+        /* Posición inicial del obstáculo (fuera de pantalla derecha) */
+        PVector pos = new PVector(
+            width + 60,
+            random(yMin, yMax)
+        );
+
+        return new ObstaculoBasico(pos.x, pos.y);
     }
 
-    // ============================================================
-    // ==================== OBSTÁCULO VIVO =========================
-    // ============================================================
+    /* Obstáculos vivos */
     @Override
     protected Obstaculo crearObstaculoVivo() {
 
         float yMin = Jugador.TECHO + 30;
         float yMax = Jugador.PISO - 40;
 
-        return new ObstaculoVivoBasico(width + 60, random(yMin, yMax));
+        PVector pos = new PVector(
+            width + 60,
+            random(yMin, yMax)
+        );
+
+        return new ObstaculoVivoBasico(pos.x, pos.y);
     }
 
-    // ============================================================
-    // ===================== ÍTEMS ALEATORIOS ======================
-    // ============================================================
+
+    /* ============================================================
+       ========================= ÍTEMS =============================
+       ============================================================ */
     @Override
     protected Item crearItem() {
 
         float yMin = Jugador.TECHO + 40;
         float yMax = Jugador.PISO - 40;
 
-        if (random(1) < 0.5) {
-            return new PocionVida(width + 60, random(yMin, yMax));
+        PVector pos = new PVector(
+            width + 60,
+            random(yMin, yMax)
+        );
+
+        /* 50% probabilidad de cada tipo */
+        if (random(1) < 0.5f) {
+            return new PocionVida(pos.x, pos.y);
         } else {
-            return new PocionStamina(width + 60, random(yMin, yMax));
+            return new PocionStamina(pos.x, pos.y);
         }
     }
 }
