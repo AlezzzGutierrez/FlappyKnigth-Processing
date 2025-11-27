@@ -50,8 +50,8 @@ public abstract class Jugador {
     private boolean teclaSpacePresionada = false;
 
     /* ----------- TAMAÑO FÍSICO ----------- */
-    protected float ancho = 40;
-    protected float alto  = 40;
+    protected float ancho = 20;
+    protected float alto  = 20;
 
     /* ----------- LÍMITES ESCENA ----------- */
     public static final float TECHO = 100;
@@ -79,8 +79,9 @@ public abstract class Jugador {
         this.colorJugador = colorJugador;
 
         /* PVectors inicializados en el constructor (correcto OOP) */
-        pos = new PVector(50, PISO);
-        vel = new PVector(0, 0);
+      
+        pos = new PVector(10, height/2);
+vel = new PVector(0, 0);
         empujeAbajo = new PVector(0, 10); // gravedad simple (px/s)
     }
 
@@ -267,10 +268,10 @@ public abstract class Jugador {
     public void setVida(int v) { vida = v; }
     public void setStamina(int s) { stamina = s; }
 
-    public void resetearPosicion() {
-        pos = new PVector(50, PISO);
-        vel = new PVector(0, 0);
-    }
+  public void resetearPosicion() {
+   pos = new PVector(10, height/2);
+    vel = new PVector(0, 0);
+}
 
     public int getStamina() { return stamina; }
 

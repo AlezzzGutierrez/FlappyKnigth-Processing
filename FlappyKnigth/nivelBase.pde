@@ -252,6 +252,11 @@ public abstract class NivelBase {
         fill(0);
         rect(0, Jugador.PISO, width, 100);
         rect(0, Jugador.TECHO, width, -100);
+        if (jugador.getHitboxY() + jugador.getHitboxH() >= Jugador.PISO ||
+    jugador.getHitboxY() <= Jugador.TECHO) {
+    jugador.setVida(0); // muerte instantánea
+}
+
 
         /* Jugador */
         jugador.dibujar();

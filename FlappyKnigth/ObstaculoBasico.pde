@@ -40,7 +40,7 @@ public class ObstaculoBasico extends Obstaculo {
         // Llamada obligatoria a la clase padre
         super(
             x, y,
-            40, 40,   // tamaño (ancho, alto)
+            50, 55,   // tamaño (ancho, alto)
             200,      // velocidad px/seg ← editable
             10        // daño aplicado ← editable
         );
