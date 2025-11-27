@@ -40,8 +40,8 @@ class NovelaFinal {
            AGREGAR PÁGINAS DEL FINAL
            ► EDITABLE: acá podés agregar, sacar o cambiar imágenes
            ------------------------------------------------------------ */
-        for (int i = 1; i <= 11; i++) {
-            PImage img = loadImage("final" + i + ".png");
+        for (int i = 1; i <= 14; i++) {
+            PImage img = loadImage("fin" + i + ".jpg");
             paginas.add(new PaginaNovela(img));
         }
 

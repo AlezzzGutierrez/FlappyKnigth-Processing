@@ -18,16 +18,17 @@ class PaginaNovela {
        DIBUJAR
        Muestra la imagen centrada en pantalla
        ------------------------------------------------------------ */
-    public void dibujar() {
+   public void dibujar() {
+    /* Usar el tamaño real de la imagen */
+    float w = imagen.width;
+    float h = imagen.height;
 
-        float w = 400;
-        float h = 500;
+    /* Calcular posición centrada */
+    float x = (width  - w) * 0.5f;
+    float y = (height - h) * 0.5f;
 
-        /* Calcular posición centrada */
-        float x = (width  - w) * 0.5f;
-        float y = (height - h) * 0.5f;
+    /* Dibujar imagen con su tamaño original */
+    image(imagen, x, y);
+}
 
-        /* Dibujar imagen */
-        image(imagen, x, y, w, h);
-    }
 }

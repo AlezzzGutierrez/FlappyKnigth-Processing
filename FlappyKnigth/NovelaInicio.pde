@@ -31,8 +31,8 @@ class NovelaInicio {
            Cargar todas las páginas
            Cada página es un objeto con su imagen
            ------------------------------ */
-        for (int i = 1; i <= 16; i++) {
-            PImage img = loadImage("tutorial" + i + ".png");
+        for (int i = 1; i <= 14; i++) {
+            PImage img = loadImage("tutorial" + i + ".jpg");
             paginas.add(new PaginaNovela(img));
         }
 
