@@ -129,7 +129,7 @@ public class Nivel1 extends NivelBase {
             random(yMin, yMax)
         );
 
-        return new ObstaculoBasico(pos.x, pos.y);
+        return new ObstaculoBasico(pos.x, pos.y,1);
     }
 
     /* Obstáculos vivos */

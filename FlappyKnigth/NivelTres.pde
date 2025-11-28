@@ -257,7 +257,7 @@ public class Nivel3 extends NivelBase {
         float yMin = Jugador.TECHO + 30;
         float yMax = Jugador.PISO - 40;
 
-        return new ObstaculoBasico(width + 60, random(yMin, yMax));
+        return new ObstaculoBasico(width + 60, random(yMin, yMax),3);
     }
 
     @Override

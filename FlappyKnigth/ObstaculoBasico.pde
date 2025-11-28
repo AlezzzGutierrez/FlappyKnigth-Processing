@@ -4,7 +4,8 @@
    Esta clase HEREDA de Obstaculo
       (por lo tanto depende completamente de su estructura).
 
-   Representa un obstáculo simple con un sprite estático.
+   Representa un obstáculo simple con un sprite estático
+   que varía según el nivel.
 
    No utiliza PVector → Se recomienda migrar a PVector
       para mejorar claridad y evitar manejo manual de x/y.
@@ -28,6 +29,7 @@ public class ObstaculoBasico extends Obstaculo {
        BLOQUE: Constructor
        ---------------------------------------------------------
        x, y → posición inicial del obstáculo.
+       nivel → número de nivel para decidir qué sprite cargar.
        super() → inicializa dimensiones, velocidad y daño.
        
        Todos los valores son editables.
@@ -35,7 +37,7 @@ public class ObstaculoBasico extends Obstaculo {
        NOTA: La operación matemática aquí es directa.
        No hay cálculos: solo asignaciones.
        --------------------------------------------------------- */
-    public ObstaculoBasico(float x, float y) {
+    public ObstaculoBasico(float x, float y, int nivel) {
 
         // Llamada obligatoria a la clase padre
         super(
@@ -46,10 +48,19 @@ public class ObstaculoBasico extends Obstaculo {
         );
 
         /* -----------------------------------------------------
-           Cargar sprite estático del obstáculo
-           Editable → cambia "rama1.png" por cualquier imagen.
+           Cargar sprite según el nivel
+           Editable → cambia los nombres por cualquier imagen.
            ----------------------------------------------------- */
-        this.sprite = loadImage("rama1.png");
+        if (nivel == 1) {
+            sprite = loadImage("rama1.png");
+        } else if (nivel == 2) {
+            sprite = loadImage("cristal.png");
+        } else if (nivel == 3) {
+            sprite = loadImage("piedraLava1.png");
+        } else {
+            // Fallback: sprite por defecto
+            sprite = loadImage("rama1.png");
+        }
     }
 
 
