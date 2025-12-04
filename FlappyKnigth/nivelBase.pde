@@ -141,6 +141,10 @@ public abstract class NivelBase {
         jugador.actualizarControles();
         jugador.actualizarFisica(dt);
         jugador.actualizarInmunidad(dt);
+        // 🔹 Agregar esta línea para que se actualicen las animaciones del Caballero
+if (jugador instanceof Caballero) {
+    ((Caballero) jugador).actualizar(dt);
+}
 
 
         /* -------------------- Tiempos -------------------------- */

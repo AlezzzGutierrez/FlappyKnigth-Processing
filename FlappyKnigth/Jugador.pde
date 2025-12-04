@@ -42,7 +42,7 @@ public abstract class Jugador {
        vel:    velocidad aplicada cada frame
        empujeAbajo: gravedad simplificada en px/s
     */
-    private PVector pos;
+    protected PVector pos;
     private PVector vel;
     private PVector empujeAbajo;
 
