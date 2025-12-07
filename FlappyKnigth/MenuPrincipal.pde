@@ -27,6 +27,8 @@ class MenuPrincipal {
     private Boton btnRerollMusica;
     private Boton btnPersonalizar;
     private PImage tituloImg;
+    private Boton btnTutorial;
+
 
 
     /* =============================================================================
@@ -101,6 +103,8 @@ class MenuPrincipal {
         btnPersonalizar  = new Boton(width/2 - 100, 370, 200, 60, "PERSONALIZAR", sonidos);
         btnRerollMusica  = new Boton(width - 60, height - 60, 40, 30, "M", sonidos);
         btnJugar         = new Boton(width/2 - 100, 290, 200, 60, "JUGAR", sonidos);
+        btnTutorial = new Boton(width/2 - 100, 530, 200, 60, "TUTORIAL", sonidos);
+
 
         tituloImg = loadImage("Titulo.png");
 
@@ -227,6 +231,8 @@ class MenuPrincipal {
         btnAjustes.dibujar();
         btnRerollMusica.dibujar();
         btnJugar.dibujar();
+        btnTutorial.dibujar();
+
     }
 
 
@@ -272,6 +278,12 @@ class MenuPrincipal {
             sonidos.reproducirMusicaNiveles();
             return "MENUNIVELES";
         }
+        
+        if (btnTutorial.fuePresionado()) {
+    sonidos.reproducirMusicaMenu();
+    return "TUTORIAL";
+        }
+
 
         return null;
     }

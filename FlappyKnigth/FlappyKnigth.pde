@@ -42,6 +42,8 @@ private MenuPrincipal menu;                 /* Pantalla principal */
 private EscenaAjustes ajustes;              /* Menú de ajustes */
 private EscenaPersonalizacion personalizacion;
 private EscenaMenuNiveles menuniveles;
+private Tutorial tutorial;
+
 
 private EscenaVictoria escenaVictoria;
 private EscenaDerrota escenaDerrota;
@@ -83,6 +85,8 @@ void setup() {
   ajustes         = new EscenaAjustes(sonidos);
   personalizacion = new EscenaPersonalizacion(sonidos, gestorJugador);
   menuniveles     = new EscenaMenuNiveles(sonidos);
+  tutorial = new Tutorial(gestorJugador);
+
 
   escenaVictoria  = new EscenaVictoria(sonidos);
   escenaDerrota   = new EscenaDerrota(sonidos);
@@ -140,6 +144,11 @@ void draw() {
     case NOVELAFINAL:
       novelaFinal.dibujar();
       break;
+      
+      case TUTORIAL:
+    tutorial.dibujar(deltaTime);
+    break;
+
 
     case NIVEL1:
     case NIVEL2:
@@ -238,6 +247,23 @@ void keyPressed() {
       sonidos.reanudar();
     }
   }
+  
+  // ----------------------------------------------------
+// TUTORIAL — avanzar texto con ENTER
+// ----------------------------------------------------
+if (estadoActual == EstadoJuego.TUTORIAL) {
+    if (key == ENTER || key == RETURN) {
+
+        // avanzarTexto() devuelve true cuando ya terminó
+        boolean finalizado = tutorial.avanzarTexto();
+
+        if (finalizado) {
+            estadoActual = EstadoJuego.MENU;
+            sonidos.reproducirMusicaMenu();
+        }
+    }
+}
+
 }
 
 
@@ -267,7 +293,13 @@ void mousePressed() {
       estadoActual = EstadoJuego.MENUNIVELES;
       sonidos.reproducirMusicaNiveles();
     }
-  }
+    else if (accion == "TUTORIAL") {     // ← ← ← FALTA ESTO
+      tutorial.reiniciar();              // ← Reinicia el tutorial
+      estadoActual = EstadoJuego.TUTORIAL;
+      sonidos.reproducirMusicaMenu();    // O música suave si quieres cambiar
+    }
+}
+  
 
 
   /* ----------------------------------------------------

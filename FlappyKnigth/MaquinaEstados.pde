@@ -73,5 +73,7 @@ enum EstadoJuego {
 
     NOVELAINICIO,     /* Cinemática o historia inicial             */
     PAUSA,            /* Estado de pausa temporal                  */
-    NOVELAFINAL       /* Cinemática final                          */
+    NOVELAFINAL,       /* Cinemática final                          */
+    TUTORIAL
+
 }
