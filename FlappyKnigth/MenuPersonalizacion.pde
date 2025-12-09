@@ -106,15 +106,15 @@ class EscenaPersonalizacion {
         // — Selección de sprite según la clase —
         PImage spriteClase = null;
 
-        if (j instanceof Caballero) spriteClase = loadImage("cab1.png");
-        if (j instanceof Arquero)   spriteClase = loadImage("Arq1.png");
-        if (j instanceof Mago)      spriteClase = loadImage("Mag1.png");
-        if (j instanceof Escudero)  spriteClase = loadImage("Esc1.png");
+        if (j instanceof Caballero) spriteClase = loadImage("iconSword.png");
+        if (j instanceof Arquero)   spriteClase = loadImage("iconArco.png");
+        if (j instanceof Mago)      spriteClase = loadImage("iconMago.png");
+        if (j instanceof Escudero)  spriteClase = loadImage("iconEscudo.png");
 
         // — Dibujar sprite centrado —
         if (spriteClase != null) {
             imageMode(CENTER);
-            image(spriteClase, width/2, 275, 125, 125);
+            image(spriteClase, width/2, 275, 120, 106);
         }
 
 
