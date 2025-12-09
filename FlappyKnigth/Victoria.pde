@@ -44,7 +44,7 @@ class EscenaVictoria {
         this.sonidos = gestor;
 
         /* Cargar imagen del fondo */
-        this.fondoVictoria = loadImage("Victoria.png");
+        this.fondoVictoria = loadImage("victoria.png");
 
         /* Crear el botón para volver */
         this.btnVolver = new Boton(

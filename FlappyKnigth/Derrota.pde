@@ -40,7 +40,7 @@ class EscenaDerrota {
     this.sonidos = gestor;
 
     // Fondo de pantalla
-    fondoDerrota = loadImage("Derrota.png");
+    fondoDerrota = loadImage("derrota.png");
 
     // Crear botón de retorno
     btnVolver = new Boton(

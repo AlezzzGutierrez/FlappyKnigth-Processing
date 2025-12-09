@@ -1,37 +1,32 @@
 /* ================================================================
-   CLASE BotonBoolean
+   CLASE BotonBoolean (versión mejorada)
    ---------------------------------------------------------------
-    Clase independiente (NO hereda de ninguna otra).
-    Su función es representar un botón ON/OFF interactivo.
-    NO usa PVectors → sería útil si deseas trabajar con posiciones
-     más complejas, pero aquí no es necesario.
-    Incluye animación de "hover" cuando el mouse pasa encima.
+   - Misma funcionalidad que antes (NO se tocó nada de sonido).
+   - Se elimina delay() y se usa cooldown no bloqueante.
+   - Se añade método contiene() y esClick().
+   - Animación hover más limpia.
 ================================================================ */
 class BotonBoolean {
 
-    /* ------------------------------------------------------------
-       ATRIBUTOS PRIVADOS
-       ------------------------------------------------------------
-       - Se mantiene encapsulación: todos son privados.
-       - Las posiciones NO usan PVector (simpleza).
-         (Se recomienda PVector si se agregaran físicas o UI compleja)
-    ------------------------------------------------------------ */
-    private float x, y;             // Posición del botón
-    private float ancho, alto;      // Dimensiones del botón
-    private boolean activo;         // Estado ON/OFF del botón
-    private String texto;           // Etiqueta útil para identificar
-    private GestorSonidos sonidos;  // Dependencia: Gestor de sonidos
+    // ------------------------------------------------------------
+    //  ATRIBUTOS PRIVADOS
+    // ------------------------------------------------------------
+    private float x, y;
+    private float ancho, alto;
+    private boolean activo;
+    private String texto;
+    private GestorSonidos sonidos;
 
-    // Animación de hover
-    private float hoverExtra = 0;   // Expansión visual al pasar el mouse
+    private float hoverExtra = 0;
+
+    // Cooldown no bloqueante
+    private int ultimoClick = 0;
+    private int cooldown = 150; // ms
 
 
-    /* ------------------------------------------------------------
-       CONSTRUCTOR
-       ------------------------------------------------------------
-       Se inicializan TODOS los atributos necesarios.
-       - Verificado: no queda ninguna variable sin asignar.
-    ------------------------------------------------------------ */
+    // ------------------------------------------------------------
+    //  CONSTRUCTOR
+    // ------------------------------------------------------------
     public BotonBoolean(float x, float y, float ancho, float alto,
                         String texto, GestorSonidos sonidos) {
 
@@ -42,84 +37,81 @@ class BotonBoolean {
         this.texto = texto;
         this.sonidos = sonidos;
 
-        this.activo = true; // Estado inicial editable
+        this.activo = true;
     }
 
 
+    // ------------------------------------------------------------
+    //  MÉTODO NUEVO: contiene(mx, my)
+    //  Evita repetir condiciones del mouse
+    // ------------------------------------------------------------
+    private boolean contiene(int mx, int my) {
+        return mx > x && mx < x + ancho &&
+               my > y && my < y + alto;
+    }
 
-    /* ------------------------------------------------------------
-       DIBUJAR EL BOTÓN
-       ------------------------------------------------------------
-       - Cambia el color según el estado ON/OFF.
-       - Añade una animación cuando el usuario pasa el mouse encima.
-       
-       Matemática aplicada:
-       hoverExtra = lerp(hoverExtra, objetivo, 0.15)
-       → interpola suavemente entre el tamaño normal y el ampliado.
-    ------------------------------------------------------------ */
+
+    // ------------------------------------------------------------
+    //  MÉTODO NUEVO: esClick()
+    //  Detecta clic real sin delay()
+    // ------------------------------------------------------------
+    private boolean esClick() {
+
+        if (!mousePressed) return false;
+
+        if (!contiene(mouseX, mouseY)) return false;
+
+        int ahora = millis();
+
+        if (ahora - ultimoClick < cooldown) return false;
+
+        ultimoClick = ahora;
+        return true;
+    }
+
+
+    // ------------------------------------------------------------
+    //  DIBUJAR BOTÓN
+    // ------------------------------------------------------------
     public void dibujar() {
 
-        /* -------- ANIMACIÓN DE HOVER -------- */
-        boolean sobreMouse = mouseX > x && mouseX < x + ancho &&
-                             mouseY > y && mouseY < y + alto;
-
-        // Si el mouse está encima, expandimos suavemente
-        float objetivo = sobreMouse ? 6 : 0;
+        // HOVER
+        float objetivo = contiene(mouseX, mouseY) ? 6 : 0;
         hoverExtra = lerp(hoverExtra, objetivo, 0.15f);
 
+        // COLOR
+        if (activo) fill(0, 200, 0);
+        else fill(200, 0, 0);
 
-        /* -------- COLOR SEGÚN ESTADO -------- */
-        if (activo) fill(0, 200, 0);   // Verde ON
-        else fill(200, 0, 0);          // Rojo OFF
-
-        /* -------- DIBUJAR EL RECTÁNGULO -------- */
         rect(x - hoverExtra/2, y - hoverExtra/2,
              ancho + hoverExtra, alto + hoverExtra, 10);
 
-        /* -------- DIBUJAR TEXTO -------- */
+        // TEXTO
         fill(255);
         textAlign(CENTER, CENTER);
         textSize(18);
 
-        String estado = activo ? "ON" : "OFF";
-
-        text(texto + ": " + estado,
+        text(texto + ": " + (activo ? "ON" : "OFF"),
              x + ancho/2, y + alto/2);
     }
 
 
-
-    /* ------------------------------------------------------------
-       DETECTAR CLICK
-       ------------------------------------------------------------
-       - Verifica si el mouse está dentro del botón.
-       - Alterna ON ↔ OFF.
-       - Reproduce un sonido.
-       - delay(150) evita múltiples clicks instantáneos.
-       ------------------------------------------------------------ */
+    // ------------------------------------------------------------
+    //  DETECTAR CLICK (usando esClick())
+    // ------------------------------------------------------------
     public void detectarClick() {
 
-        boolean dentro = 
-          mouseX > x && mouseX < x + ancho &&
-          mouseY > y && mouseY < y + alto;
+        if (esClick()) {
 
-        if (dentro && mousePressed) {
-
-            activo = !activo;         // Cambio de estado
-            sonidos.reproducirClick(); // Sonido asociado
-
-            delay(150);              // Evita spam de clicks
+            activo = !activo;      // Cambiar estado
+            sonidos.reproducirClick(); // Sonido mantenido
         }
     }
 
 
-
-    /* ------------------------------------------------------------
-       GETTER DEL ESTADO
-       ------------------------------------------------------------
-       Encapsulación correcta:
-       - No se permite modificar el estado desde fuera sin click.
-       ------------------------------------------------------------ */
+    // ------------------------------------------------------------
+    //  GETTER
+    // ------------------------------------------------------------
     public boolean estaActivo() {
         return activo;
     }

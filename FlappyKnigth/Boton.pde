@@ -1,91 +1,52 @@
 /* ================================================================
-   CLASE: Boton
+   CLASE: Boton (versión con animación de barra)
    ----------------------------------------------------------------
-   - Clase independiente (NO hereda de otra clase).
-   - Dependiente del sistema de sonido: requiere GestorSonidos.
-   - Usa PVector para manejar la posición del botón.
-     Esto facilita movimiento, interpolaciones, físicas y animaciones.
-   - Incluye animación de hover (aumento de borde + cambio de color).
-   - Diseñada para procesamiento orientado a objetos.
+   Cambios:
+   - Botón rectangular negro con borde negro grueso.
+   - Texto blanco.
+   - Al hacer hover:
+       · El botón se expande en X (animación suave).
+       · Una barra interna de color aleatorio crece en X.
+   - Sonidos NO fueron modificados.
 ================================================================ */
 class Boton {
 
-    /* ============================================================
-       BLOQUE 1 — ATRIBUTOS PRIVADOS (ENCAPSULACIÓN)
-       ------------------------------------------------------------
-       Todos los atributos están en private → ningún otro objeto
-       del juego puede modificarlos sin pasar por los métodos públicos.
-       ------------------------------------------------------------
-       Explicación de variables:
-       - posicion: PVector (posición del botón en pantalla).
-       - ancho / alto: dimensiones del rectángulo.
-       - texto: texto que se mostrará dentro del botón.
-       - estaSobre: indica si el mouse está encima.
-       - sonidoHover: evita repetir sonido al hacer hover.
-       - mezclaColor: transición del color del texto (0→negro, 1→amarillo).
-       - sonidos: dependencia → la clase necesita un gestor de sonido.
-    ============================================================ */
     private PVector posicion;
     private float ancho, alto;
     private String texto;
 
     private boolean estaSobre = false;
     private boolean sonidoHover = false;
-    private float mezclaColor = 0;
 
     private GestorSonidos sonidos;
 
+    // --- Animación nueva ---
+    private float expansion = 0;        // cuánto se agranda en X
+    private float progresoBarra = 0;    // cuánto crece la barra interna
+    private int colorBarra;             // color aleatorio generado al hacer hover
 
-    /* ============================================================
-       BLOQUE 2 — CONSTRUCTOR
-       ------------------------------------------------------------
-       Se inicializan TODAS las variables necesarias para evitar nulos.
-       PVector se usa para claridad y posibles animaciones futuras.
-       ------------------------------------------------------------
-       NOTA:
-       Puedes editar todo lo que se envía al constructor, por ejemplo:
-       - cambiar dimensiones
-       - texto dinámico
-       - añadir más parámetros si luego deseas personalizar estilos
-    ============================================================ */
     public Boton(float x, float y, float ancho, float alto,
                  String texto, GestorSonidos gestor) {
 
-        this.posicion = new PVector(x, y); 
+        this.posicion = new PVector(x, y);
         this.ancho = ancho;
         this.alto = alto;
         this.texto = texto;
 
-        this.sonidos = gestor; // dependencia externa
+        this.sonidos = gestor;
+
+        colorBarra = color(255, 0, 0); // inicial cualquiera
     }
 
 
-
     /* ============================================================
-       BLOQUE 3 — DIBUJAR EL BOTÓN EN PANTALLA
-       ------------------------------------------------------------
-       Incluye:
-       - detección de hover
-       - animación del borde
-       - transición de color con lerpColor
-       - sonido al pasar por encima
-       ------------------------------------------------------------
-       Explicación matemática aplicada:
-       mezclaColor = min(1, mezclaColor + 0.02);
-       → incrementa la mezcla gradualmente hacia 1 (amarillo)
-
-       mezclaColor = max(0, mezclaColor - 0.02);
-       → disminuye la mezcla hacia negro
+       DIBUJAR EL BOTÓN
     ============================================================ */
     public void dibujar() {
 
-        /* --------------------------------------------------------
-           1) DETECTAR HOVER (mouse dentro del botón)
-           --------------------------------------------------------
-           Fórmula de inclusión dentro de un rectángulo:
-           x < mouseX < x + ancho
-           y < mouseY < y + alto
-        -------------------------------------------------------- */
+        /* ------------------------------
+           DETECTAR HOVER
+        ------------------------------ */
         estaSobre = (
             mouseX > posicion.x &&
             mouseX < posicion.x + ancho &&
@@ -93,105 +54,80 @@ class Boton {
             mouseY < posicion.y + alto
         );
 
-
-        /* --------------------------------------------------------
-           2) SONIDO DE HOVER
-           --------------------------------------------------------
-           - sonido se activa UNA sola vez al entrar
-           - sonido se detiene al salir
-        -------------------------------------------------------- */
+        /* ------------------------------
+           SONIDO DE HOVER
+        ------------------------------ */
         if (estaSobre && !sonidoHover) {
             sonidos.reproducirDorado();
             sonidoHover = true;
 
-        } else if (!estaSobre && sonidoHover) {
+            // Reiniciamos la animación al entrar
+            progresoBarra = 0;
+            colorBarra = color(random(255), random(255), random(255));
+        }
+        else if (!estaSobre && sonidoHover) {
             sonidos.detenerDorado();
             sonidoHover = false;
         }
 
-
-        /* --------------------------------------------------------
-           3) APARIENCIA DEL BOTÓN
-           --------------------------------------------------------
-           Si el mouse está encima:
-           - se dibuja un borde más grueso
-           - se avanza transición hacia amarillo
-        -------------------------------------------------------- */
+        /* ------------------------------
+           ANIMACIÓN DE EXPANSIÓN
+        ------------------------------ */
         if (estaSobre) {
-
-            // Borde negro alrededor
-            fill(0);
-            stroke(255);
-
-            // borde ancho (rectángulo más grande)
-            rect(posicion.x - 5, posicion.y - 5,
-                 ancho + 10, alto + 10, 10);
-
-            mezclaColor = min(1, mezclaColor + 0.02);
-
+            expansion = lerp(expansion, 20, 0.15); // se agranda +20px aprox
+            progresoBarra = min(progresoBarra + 25, ancho + expansion);
         } else {
-
-            // Botón blanco tradicional
-            fill(255);
-            stroke(0);
-            rect(posicion.x, posicion.y, ancho, alto, 10);
-
-            mezclaColor = max(0, mezclaColor - 0.02);
+            expansion = lerp(expansion, 0, 0.15);
+            progresoBarra = lerp(progresoBarra, 0, 0.1);
         }
 
+        float xAnim = posicion.x - expansion/2;
+        float wAnim = ancho + expansion;
 
-        /* --------------------------------------------------------
-           4) COLOR SUAVE DEL TEXTO
-           --------------------------------------------------------
-           lerpColor(color1, color2, t):
-                t = 0 → color1
-                t = 1 → color2
-        -------------------------------------------------------- */
-        color colorTexto = lerpColor(
-            color(0),             // negro
-            color(255, 220, 0),   // amarillo dorado
-            mezclaColor           // interpolación
-        );
+        /* ------------------------------
+           DIBUJAR CUERPO DEL BOTÓN
+        ------------------------------ */
+        stroke(0);
+        strokeWeight(4);
+        fill(0);
+        rect(xAnim, posicion.y, wAnim, alto, 4);
 
-        fill(colorTexto);
+        /* ------------------------------
+           BARRA INTERNA (solo en hover)
+        ------------------------------ */
+        if (estaSobre) {
+            noStroke();
+            fill(colorBarra);
+            rect(xAnim, posicion.y, progresoBarra, alto);
+        }
+
+        /* ------------------------------
+           TEXTO
+        ------------------------------ */
+        fill(255);
         textAlign(CENTER, CENTER);
         textSize(20);
-
-        // posición centrada del texto
-        text(texto, posicion.x + ancho / 2, posicion.y + alto / 2);
+        text(texto, xAnim + wAnim/2, posicion.y + alto/2);
     }
 
 
 
-
     /* ============================================================
-       BLOQUE 4 — DETECTAR SI SE PRESIONÓ EL BOTÓN
-       ------------------------------------------------------------
-       Regresa true si el mouse está encima *mientras se hace click*.
-       Además reproduce un sonido de click.
+       DETECTAR CLIC
     ============================================================ */
     public boolean fuePresionado() {
 
         if (estaSobre && mousePressed) {
-
             sonidos.reproducirClick();
             sonidos.sonidoDorado.stop();
-
             return true;
         }
-
         return false;
     }
 
 
-
     /* ============================================================
-       BLOQUE 5 — GETTERS PÚBLICOS (ENCAPSULACIÓN)
-       ------------------------------------------------------------
-       Solo se expone lo necesario.
-       El texto puede ser leído pero NO modificado desde fuera.
+       GETTERS
     ============================================================ */
-    public String getTexto() {
-        return texto;
-    }
+    public String getTexto() { return texto; }
 }
