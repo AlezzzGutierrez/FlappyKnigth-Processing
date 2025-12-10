@@ -108,26 +108,30 @@ public class Escudero extends Jugador {
     // HABILIDAD X — "Escudo Divino" = Inmunidad temporal
     // ============================================================================
     @Override
-    protected void habilidadX() {
+protected void habilidadX() {
 
-        if (getStamina() < 11) return;
-        consumirStamina(11);
+    if (getStamina() < 11) return;
+    consumirStamina(11);
 
-        // Cambiar sprite temporalmente
-        spriteActual = spriteEspecial;
-        tiempoSpriteEspecial = 1.0f;
+    spriteActual = spriteEspecial;
+    tiempoSpriteEspecial = 1.0f;
 
-        sonidos.reproducirSonidoEscudos();
+    sonidos.reproducirSonidoEscudos();
 
-        /*
-            activarInmunidad(tiempo)
-            ------------------------
-            • Habilita un FLAG interno en Jugador que evita recibir daño.
-            • El tiempo se descuenta con dt.
-        */
-        activarInmunidad(8.0f);   // EDITABLE (8 segundos)
+    activarInmunidad(8.0f);
 
-        println(getNombre() +
-            " levanta su ESCUDO DIVINO (invulnerable por 8 segundos)");
-    }
+    // ----------------- ACTIVAR ESCUDO VISUAL -----------------
+    mostrarEscudoVisual = true;
+    tiempoEscudoVisual = 8.0f;  // mismo tiempo que la habilidad
+
+    // Color inicial (azul 75% opacidad)
+    colorEscudoActual = color(0, 0, 255, 190);
+
+    // Arranca el timer de cambio de color
+    timerColorEscudo = 1.0f;
+
+    println(getNombre() +
+        " levanta su ESCUDO DIVINO (invulnerable por 8 segundos)");
+}
+
 }

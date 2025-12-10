@@ -64,7 +64,7 @@ public class PiedraLava extends Obstaculo {
         this.sprites = new ArrayList<PImage>();
 
         /* Carga de sprites — EDITABLE */
-        sprites.add(loadImage("piedralava1.png"));
+        sprites.add(loadImage("piedraLava1.png"));
         sprites.add(loadImage("piedraLava2.png"));
     }
 

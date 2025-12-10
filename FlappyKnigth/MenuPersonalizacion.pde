@@ -137,10 +137,10 @@ class EscenaPersonalizacion {
         textSize(16);
         textAlign(LEFT, TOP);
         text("Clases\nDisponibles:\n\n"
-           + "- Caballero 40%\n"
-           + "- Arquero 30%\n"
-           + "- Escudero 20%\n"
-           + "- Mago 10%",
+           + "- Caballero 25%\n"
+           + "- Arquero 25%\n"
+           + "- Escudero 25%\n"
+           + "- Mago 25%",
            width - 140, 210);
 
 
@@ -169,7 +169,7 @@ class EscenaPersonalizacion {
         textAlign(CENTER, CENTER);
 
         if (textoClaseObtenida.equals("")) {
-            text("Eres un: ???", width/2, 380);
+            text("Eres un: Caballero", width/2, 380);
         } else {
             text("Eres un: " + textoClaseObtenida, width/2, 380);
         }

@@ -26,6 +26,13 @@ public abstract class Jugador {
     protected PImage spriteActual;
 
     protected float tiempoSpriteEspecial = 0; // duración del sprite temporal
+    
+    // ---------------- ESCUDO VISUAL (PARA CLASE ESCUDERO) ----------------
+protected boolean mostrarEscudoVisual = false;
+protected float tiempoEscudoVisual = 0;
+protected float timerColorEscudo = 0;
+protected int colorEscudoActual;
+
 
     /* ----------- STAMINA ----------- */
     private int stamina = 60;
@@ -95,10 +102,24 @@ vel = new PVector(0, 0);
     public int getColor() { return colorJugador; }
 
     /* Hitbox dependiente de la posición */
-    public float getHitboxX() { return pos.x; }
-    public float getHitboxY() { return pos.y - alto; }
-    public float getHitboxW() { return ancho; }
-    public float getHitboxH() { return alto; }
+// Reducido arriba 30px y derecha 15px
+public float getHitboxX() { 
+    return pos.x + 30; 
+}
+
+public float getHitboxY() { 
+    return pos.y - alto + 30; 
+}
+
+public float getHitboxW() { 
+    return ancho - 35; 
+}
+
+public float getHitboxH() { 
+    return alto - 70; 
+}
+
+
 
     public PVector getPos() { return pos.copy(); }
     public float getAncho() { return ancho; }
@@ -153,11 +174,8 @@ vel = new PVector(0, 0);
     public void presionarSpace() {
 
         if (!teclaSpacePresionada) {
-
-            if (stamina > 0) {
-                stamina--;            // gasto de stamina real
-                vel.y = -fuerzaSalto; // salto simple
-            }
+          
+          vel.y = -fuerzaSalto; // salto simple
 
             teclaSpacePresionada = true;
         }
@@ -202,6 +220,15 @@ vel = new PVector(0, 0);
             tiempoSpriteEspecial -= dt;
             if (tiempoSpriteEspecial <= 0) spriteActual = spriteNormal;
         }
+        
+        // ESCUDO VISUAL TEMPORAL
+if (mostrarEscudoVisual) {
+    tiempoEscudoVisual -= dt;
+    if (tiempoEscudoVisual <= 0) {
+        mostrarEscudoVisual = false;
+    }
+}
+
     }
 
 
@@ -241,16 +268,36 @@ vel = new PVector(0, 0);
     // ------------------ DIBUJAR JUGADOR --------------------------
     // ============================================================
 
-    public void dibujar() {
+public void dibujar() {
 
-        if (spriteActual != null) {
-            image(spriteActual, pos.x, pos.y - alto, ancho, alto);
-            return;
-        }
-
+    // ----------------- DIBUJAR SPRITE -----------------
+    if (spriteActual != null) {
+        image(spriteActual, pos.x, pos.y - alto, ancho, alto);
+    } else {
         fill(colorJugador);
         rect(pos.x, pos.y - alto, ancho, alto);
     }
+
+    // ----------------- DIBUJAR ESCUDO VISUAL -----------------
+    if (mostrarEscudoVisual) {
+
+        // Cambiar color cada 1 segundo
+        timerColorEscudo -= 1.0 / frameRate;
+        if (timerColorEscudo <= 0) {
+            timerColorEscudo = 0.2;
+            if (colorEscudoActual == color(0, 0, 255, 190))
+                colorEscudoActual = color(100, 200, 255, 190);
+            else
+                colorEscudoActual = color(0, 0, 255, 190);
+        }
+
+        float diametro = alto + 35;
+
+        noStroke();
+        fill(colorEscudoActual);
+        ellipse(pos.x + ancho/2, pos.y - alto/2, diametro, diametro);
+    }
+}
 
 
     // ============================================================

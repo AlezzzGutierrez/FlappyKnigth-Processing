@@ -83,21 +83,21 @@ class GestorJugadorActual {
        (EDITABLE: puedes modificar porcentajes sin romper lógica)
     */
 
-    if (r < 0.40f) {
+    if (r < 0.25f) {
 
-      jugadorActual = new Caballero("Jugador");
+        jugadorActual = new Caballero("Jugador");
 
-    } else if (r < 0.70f) {
+    } else if (r < 0.50f) {
 
-      jugadorActual = new Arquero("Jugador");
+        jugadorActual = new Arquero("Jugador");
 
-    } else if (r < 0.90f) {
+    } else if (r < 0.75f) {
 
-      jugadorActual = new Escudero("Jugador");
+        jugadorActual = new Escudero("Jugador");
 
     } else {
 
-      jugadorActual = new Mago("Jugador");
+        jugadorActual = new Mago("Jugador");
     }
-  }
+}
 }

@@ -1,3 +1,5 @@
+
+
 /* ============================================================
    =============== CLASE ABSTRACTA: NivelBase ==================
    Clase base que define:
@@ -34,6 +36,15 @@ public abstract class NivelBase {
     /* ---- Items ---- */
     protected float tiempoEntreItems = 5f;
     protected float tiempoDesdeUltimoItem = 0;
+    
+    // ---------------- FLASH ----------------
+protected boolean flashActivo = false;
+protected float flashX, flashY, flashW, flashH; // rectángulo
+protected float flashTiempo = 0;
+protected float flashDuracion = 0.12f; // 120 ms
+protected boolean flashEsLinea = false;
+protected float flashX2, flashY2; // segundo punto para línea diagonal
+
 
 
     /* ============================================================
@@ -141,6 +152,8 @@ public abstract class NivelBase {
         jugador.actualizarControles();
         jugador.actualizarFisica(dt);
         jugador.actualizarInmunidad(dt);
+        actualizarFlash(dt);
+
         // 🔹 Agregar esta línea para que se actualicen las animaciones del Caballero
 if (jugador instanceof Caballero) {
     ((Caballero) jugador).actualizar(dt);
@@ -168,6 +181,8 @@ if (jugador instanceof Caballero) {
 
             tiempoDesdeUltimoSpawnVivo = 0;
         }
+        
+
 
 
         /* ============================================================
@@ -258,13 +273,16 @@ if (jugador instanceof Caballero) {
         rect(0, Jugador.TECHO, width, -100);
         if (jugador.getHitboxY() + jugador.getHitboxH() >= Jugador.PISO ||
     jugador.getHitboxY() <= Jugador.TECHO) {
-    jugador.setVida(0); // muerte instantánea
+    jugador.recibirDanio(10); // por ejemplo
+
 }
 
 
         /* Jugador */
         jugador.dibujar();
         jugador.dibujarBarras();
+        dibujarFlash();
+
 
         /* Obstáculos */
         for (Obstaculo o : obstaculos) o.dibujar();
@@ -275,6 +293,79 @@ if (jugador instanceof Caballero) {
         
         text("Tiempo: " + int(duracionNivel - tiempoTranscurrido), width - 150, 40);
     }
+
+protected void activarFlashRectangular(float x, float y, float w, float h, float duracionMs) {
+    flashX = x;
+    flashY = y;
+    flashW = w;
+    flashH = h;
+    flashDuracion = duracionMs / 1000.0f;
+
+    flashEsLinea = false;
+    flashTiempo = 0;
+    flashActivo = true;
+}
+
+protected void actualizarFlash(float dt) {
+    if (!flashActivo) return;
+
+    flashTiempo += dt;
+
+    if (flashTiempo >= flashDuracion) {
+        flashActivo = false;
+    }
+}
+
+protected void dibujarFlash() {
+    if (!flashActivo) return;
+
+    float t = flashTiempo / flashDuracion;
+    float alpha = 128 * (1 - t);
+    if (alpha < 0) alpha = 0;
+
+    pushStyle();
+
+    // ---------------------------
+    // FLASH LÍNEA (adelgazado)
+    // ---------------------------
+    if (flashEsLinea) {
+        stroke(255, alpha);   // blanco con fade
+        strokeWeight(6);      // << MÁS FINO (antes 12)
+        noFill();
+        line(flashX, flashY, flashX2, flashY2);
+    }
+
+    // ---------------------------
+    // FLASH RECTANGULAR REDONDEADO
+    // ---------------------------
+    else {
+        noStroke();
+        fill(255, alpha);
+
+        // <<<< BORDE REDONDEADO >>>>
+        float borde = min(flashW, flashH) * 0.25f;
+        if (borde > 40) borde = 40; // límite para no exagerar
+
+        rect(flashX, flashY, flashW, flashH, borde);
+    }
+
+    popStyle();
+}
+
+
+protected void activarFlashLinea(float x1, float y1, float x2, float y2, float duracionMs) {
+
+    flashX = x1;
+    flashY = y1;
+    flashX2 = x2;
+    flashY2 = y2;
+
+    flashDuracion = duracionMs / 1000.0f;
+
+    flashEsLinea = true;
+    flashTiempo = 0;
+    flashActivo = true;
+}
 
 
 
@@ -294,122 +385,161 @@ if (jugador instanceof Caballero) {
     /* ------------------------------------------------------------
        Eliminar obstáculos en un rango cuadrado usando PVector
        ------------------------------------------------------------ */
-    public void eliminarObstaculosCercanos(Jugador jugador, float rango) {
 
-        PVector centro = new PVector(jugador.getHitboxX(), jugador.getHitboxY());
+public void eliminarObstaculosCercanos(Jugador jugador, float rango) {
 
-        for (int i = obstaculos.size() - 1; i >= 0; i--) {
+    // FLASH RECTANGULAR DEL RANGO
+    activarFlashRectangular(
+        jugador.getHitboxX() - rango,
+        jugador.getHitboxY() - rango,
+        rango * 2,
+        rango * 2,
+        120
+    );
 
-            Obstaculo o = obstaculos.get(i);
-            PVector pos = new PVector(o.getX(), o.getY());
+    // LÓGICA ORIGINAL
+    PVector centro = new PVector(jugador.getHitboxX(), jugador.getHitboxY());
 
-            if (PVector.dist(pos, centro) <= rango) {
-                obstaculos.remove(i);
-            }
-        }
+    for (int i = obstaculos.size() - 1; i >= 0; i--) {
+        PVector pos = new PVector(obstaculos.get(i).getX(), obstaculos.get(i).getY());
+        if (PVector.dist(pos, centro) <= rango) obstaculos.remove(i);
     }
+}
+
 
 
 
     /* ------------------------------------------------------------
        Eliminar el obstáculo más cercano
        ------------------------------------------------------------ */
-    public void eliminarObstaculoMasCercano(Jugador jugador) {
+public void eliminarObstaculoMasCercano(Jugador jugador) {
 
-        if (obstaculos.isEmpty()) return;
+    if (obstaculos.isEmpty()) return;
 
-        PVector centro = new PVector(jugador.getHitboxX(), jugador.getHitboxY());
+    PVector centro = new PVector(jugador.getHitboxX(), jugador.getHitboxY());
 
-        Obstaculo objetivo = null;
-        float distanciaMin = Float.MAX_VALUE;
+    Obstaculo objetivo = null;
+    float distanciaMin = Float.MAX_VALUE;
 
-        for (Obstaculo o : obstaculos) {
-
-            PVector pos = new PVector(o.getX(), o.getY());
-            float d = PVector.dist(pos, centro);
-
-            if (d < distanciaMin) {
-                distanciaMin = d;
-                objetivo = o;
-            }
+    for (Obstaculo o : obstaculos) {
+        float d = dist(o.getX(), o.getY(), centro.x, centro.y);
+        if (d < distanciaMin) {
+            distanciaMin = d;
+            objetivo = o;
         }
-
-        if (objetivo != null) obstaculos.remove(objetivo);
     }
 
+    if (objetivo != null) {
+
+        // FLASH LÍNEA DESDE EL JUGADOR HASTA EL OBSTÁCULO
+        activarFlashLinea(
+            centro.x,
+            centro.y,
+            objetivo.getX(),
+            objetivo.getY(),
+            120
+        );
+
+        obstaculos.remove(objetivo);
+    }
+}
 
 
     /* ------------------------------------------------------------
        Caballero: elimina obstáculos en un rango delantero
        ------------------------------------------------------------ */
-    public void eliminarObstaculosEnRangoCaballero(Jugador jugador) {
+public void eliminarObstaculosEnRangoCaballero(Jugador jugador) {
 
-        PVector centro = new PVector(jugador.getHitboxX(), jugador.getHitboxY());
+    float rangoX = 1000;
+    float rangoY = jugador.getAlto() * 1;
 
-        float rangoX = 1000;
-        float rangoY = jugador.getAlto() * 2;
+    // FLASH RECTANGULAR EXACTO AL RANGO
+    activarFlashRectangular(
+        jugador.getHitboxX(),
+        jugador.getHitboxY() - rangoY,
+        rangoX,
+        rangoY * 2,
+        120
+    );
 
-        for (int i = obstaculos.size() - 1; i >= 0; i--) {
+    // LÓGICA ORIGINAL
+    PVector centro = new PVector(jugador.getHitboxX(), jugador.getHitboxY());
 
-            Obstaculo o = obstaculos.get(i);
-            PVector pos = new PVector(o.getX(), o.getY());
+    for (int i = obstaculos.size() - 1; i >= 0; i--) {
+        PVector pos = new PVector(obstaculos.get(i).getX(), obstaculos.get(i).getY());
+        float dx = pos.x - centro.x;
+        float dy = abs(pos.y - centro.y);
 
-            float dx = pos.x - centro.x;
-            float dy = abs(pos.y - centro.y);
-
-            if (dx >= 0 && dx <= rangoX && dy <= rangoY) {
-                obstaculos.remove(i);
-            }
-        }
+        if (dx >= 0 && dx <= rangoX && dy <= rangoY) obstaculos.remove(i);
     }
+}
 
 
 
     /* ------------------------------------------------------------
        Arquero: elimina 4 obstáculos más cercanos
        ------------------------------------------------------------ */
-    public void eliminar4ObstaculosMasCercanos(Jugador jugador) {
+public void eliminar4ObstaculosMasCercanos(Jugador jugador) {
 
-        if (obstaculos.isEmpty()) return;
+    // FLASH RECTANGULAR QUE CUBRE TODA LA PANTALLA
+    activarFlashRectangular(
+        0,      // X
+        0,      // Y
+        width,  // ANCHO COMPLETO
+        height, // ALTO COMPLETO
+        120     // duración en ms
+    );
 
-        PVector centro = new PVector(jugador.getHitboxX(), jugador.getHitboxY());
+    // LÓGICA ORIGINAL
+    if (obstaculos.isEmpty()) return;
 
-        ArrayList<Obstaculo> copia = new ArrayList<>(obstaculos);
+    PVector centro = new PVector(jugador.getHitboxX(), jugador.getHitboxY());
 
-        copia.sort((a, b) -> {
-            float da = PVector.dist(new PVector(a.getX(), a.getY()), centro);
-            float db = PVector.dist(new PVector(b.getX(), b.getY()), centro);
-            return Float.compare(da, db);
-        });
+    ArrayList<Obstaculo> copia = new ArrayList<>(obstaculos);
 
-        int cantidad = min(4, copia.size());
+    copia.sort((a, b) -> {
+        float da = dist(a.getX(), a.getY(), centro.x, centro.y);
+        float db = dist(b.getX(), b.getY(), centro.x, centro.y);
+        return Float.compare(da, db);
+    });
 
-        for (int i = 0; i < cantidad; i++) obstaculos.remove(copia.get(i));
-    }
+    int cantidad = min(4, copia.size());
+    for (int i = 0; i < cantidad; i++) obstaculos.remove(copia.get(i));
+}
+
 
 
 
     /* ------------------------------------------------------------
        Mago: elimina 20 obstáculos más cercanos
        ------------------------------------------------------------ */
-    public void eliminar20ObstaculosMasCercanos(Jugador jugador) {
+public void eliminar20ObstaculosMasCercanos(Jugador jugador) {
 
-        if (obstaculos.isEmpty()) return;
+    // FLASH RECTANGULAR QUE CUBRE TODA LA PANTALLA
+    activarFlashRectangular(
+        0,
+        0,
+        width,
+        height,
+        120
+    );
 
-        PVector centro = new PVector(jugador.getHitboxX(), jugador.getHitboxY());
+    if (obstaculos.isEmpty()) return;
 
-        ArrayList<Obstaculo> copia = new ArrayList<>(obstaculos);
+    PVector centro = new PVector(jugador.getHitboxX(), jugador.getHitboxY());
 
-        copia.sort((a, b) -> {
-            float da = PVector.dist(new PVector(a.getX(), a.getY()), centro);
-            float db = PVector.dist(new PVector(b.getX(), b.getY()), centro);
-            return Float.compare(da, db);
-        });
+    ArrayList<Obstaculo> copia = new ArrayList<>(obstaculos);
 
-        int cantidad = min(20, copia.size());
+    copia.sort((a, b) -> {
+        float da = PVector.dist(new PVector(a.getX(), a.getY()), centro);
+        float db = PVector.dist(new PVector(b.getX(), b.getY()), centro);
+        return Float.compare(da, db);
+    });
 
-        for (int i = 0; i < cantidad; i++) obstaculos.remove(copia.get(i));
-    }
+    int cantidad = min(20, copia.size());
+
+    for (int i = 0; i < cantidad; i++) obstaculos.remove(copia.get(i));
+}
 
 
 
