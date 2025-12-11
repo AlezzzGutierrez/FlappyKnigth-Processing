@@ -95,17 +95,23 @@ vel = new PVector(0, 0);
     public int getColor() { return colorJugador; }
 
     /* Hitbox dependiente de la posición */
- // Offset horizontal: (256 - 150) / 2 = 53
-public float getHitboxX() { return pos.x + 53; }
+ /* Hitbox dependiente de la posición */
+// Reducido arriba 30px y derecha 15px
+public float getHitboxX() { 
+    return pos.x + 30; 
+}
 
-// Offset vertical: (200 - 101) = 99 desde arriba
-// Como pos.y está en los pies, restamos el alto total y luego sumamos el offset
-public float getHitboxY() { return pos.y - 200 + 99; }
+public float getHitboxY() { 
+    return pos.y - alto + 30; 
+}
 
-// Tamaño del rectángulo
-public float getHitboxW() { return 150; }
-public float getHitboxH() { return 101; }
+public float getHitboxW() { 
+    return ancho - 35; 
+}
 
+public float getHitboxH() { 
+    return alto - 70; 
+}
     public PVector getPos() { return pos.copy(); }
     public float getAncho() { return ancho; }
     public float getAlto() { return alto; }
@@ -222,6 +228,10 @@ public float getHitboxH() { return 101; }
             tiempoSpriteEspecial -= dt;
             if (tiempoSpriteEspecial <= 0) spriteActual = spriteNormal;
         }
+        if (tocaPisoOTecho()) {
+    vida = 0; // instakill
+}
+
     }
 
 
@@ -346,6 +356,9 @@ public void actualizar(float dt) {
     actualizarFisica(dt);
     actualizarInmunidad(dt);
     actualizarControles();  // 👈 esto dispara Z/X/Space
+}
+public boolean tocaPisoOTecho() {
+    return (pos.y >= PISO || pos.y - alto <= TECHO);
 }
 
 }

@@ -4,6 +4,7 @@
    Gestiona:
    - Lista de páginas (imágenes)
    - Botón siguiente
+   - Botón saltear (ir a la última página)
    - Cambio de música al finalizar
    ============================================================ */
 class NovelaInicio {
@@ -11,14 +12,14 @@ class NovelaInicio {
     /* ------------------------------
        Atributos privados
        ------------------------------ */
-    private ArrayList<PaginaNovela> paginas;  /* Lista de páginas */
-    private int paginaActual;                /* Índice de la página mostrada */
-    private Boton btnSiguiente;              /* Botón para avanzar */
-    private GestorSonidos sonidos;           /* Referencia al gestor de audio */
+    private ArrayList<PaginaNovela> paginas;
+    private int paginaActual;
+    private Boton btnSiguiente;
+    private Boton btnSaltear;        // <<--- NUEVO BOTÓN
+    private GestorSonidos sonidos;
 
     /* ============================================================
        CONSTRUCTOR
-       Inicializa sonidos, lista de páginas y el botón.
        ============================================================ */
     public NovelaInicio(GestorSonidos sonidos) {
 
@@ -27,17 +28,14 @@ class NovelaInicio {
 
         paginas = new ArrayList<PaginaNovela>();
 
-        /* ------------------------------
-           Cargar todas las páginas
-           Cada página es un objeto con su imagen
-           ------------------------------ */
+        /* Cargar páginas */
         for (int i = 1; i <= 14; i++) {
             PImage img = loadImage("tutorial" + i + ".jpg");
             paginas.add(new PaginaNovela(img));
         }
 
         /* ------------------------------
-           Crear botón SIGUIENTE
+           Botón SIGUIENTE
            ------------------------------ */
         btnSiguiente = new Boton(
             width - 180,
@@ -47,48 +45,64 @@ class NovelaInicio {
             "SIGUIENTE",
             sonidos
         );
+
+        /* ------------------------------
+           Botón SALTEAR (nuevo)
+           Más pequeño y arriba
+           ------------------------------ */
+        btnSaltear = new Boton(
+            width - 150,   // X (pegado arriba a la derecha)
+            20,            // Y
+            130,           // ancho
+            45,            // alto
+            "SALTEAR",
+            sonidos
+        );
     }
 
 
     /* ============================================================
        DIBUJAR
-       Renderiza página + botón
        ============================================================ */
     public void dibujar() {
 
         background(0);
 
-        /* Dibujar la página actual */
         paginas.get(paginaActual).dibujar();
 
-        /* Dibujar el botón */
         btnSiguiente.dibujar();
+        btnSaltear.dibujar();   // <<--- NUEVO
     }
 
 
     /* ============================================================
        DETECTAR ACCIÓN
-       Avanza entre páginas y retorna un String cuando termina.
        ============================================================ */
     public String detectarAccion() {
 
-        /* Si se presionó SIGUIENTE */
+        /* Botón SIGUIENTE */
         if (btnSiguiente.fuePresionado()) {
 
             paginaActual++;
 
-            /* Si terminó la novela → volver a menú niveles */
             if (paginaActual >= paginas.size()) {
-
-                paginaActual = 0;  /* Reiniciar para una futura reproducción */
-
-                /* Cambiar música al menú niveles */
+                paginaActual = 0;
                 sonidos.reproducirMusicaNiveles();
-
                 return "VOLVER_MENUNIVELES";
             }
         }
 
-        return null;  /* No pasó nada */
+        /* ------------------------------
+           Botón SALTEAR (nuevo)
+           Va directo a la ÚLTIMA página
+           ------------------------------ */
+        if (btnSaltear.fuePresionado()) {
+
+            paginaActual = paginas.size() - 1;  // última imagen
+
+            return null;  // simplemente muestra la última, sin cerrar
+        }
+
+        return null;
     }
 }

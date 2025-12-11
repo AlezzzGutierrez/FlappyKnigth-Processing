@@ -35,8 +35,7 @@ class Boton {
 
         this.sonidos = gestor;
 
-      colorBarra = color(255, 215, 0); // dorado clásico (RGB)
-
+        colorBarra = color(255, 0, 0); // inicial cualquiera
     }
 
 
@@ -64,8 +63,7 @@ class Boton {
 
             // Reiniciamos la animación al entrar
             progresoBarra = 0;
-           colorBarra = color(255, 215, 0); // dorado clásico (RGB)
-
+            colorBarra = color(218, 165, 32); 
         }
         else if (!estaSobre && sonidoHover) {
             sonidos.detenerDorado();

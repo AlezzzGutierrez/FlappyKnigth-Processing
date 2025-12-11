@@ -24,8 +24,10 @@ public class Nivel3 extends NivelBase {
     private float intervaloObstaculos = 1000.0f;     // No se usa directamente aquí, pero se conserva.
     private float intervaloObstaculosVivos = 1000.0f;
 
-    private float intervaloObstaculosQueCae = 0.5f;  // Generación de piedras de lava
+    private float intervaloObstaculosQueCae = 1.5f;  // Generación de piedras de lava
     private float timerObstaculoCae = 0;
+    
+
 
 
     /* ================================================================================
@@ -144,6 +146,10 @@ public class Nivel3 extends NivelBase {
 
             // Obstáculo que cae → Piedra de lava
             agregarObstaculo(new PiedraLava(xRandom, -100));
+            
+
+
+
         }
 
 
