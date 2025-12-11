@@ -12,7 +12,8 @@
           - sistema de sonido
           - sistema de niveles (nivelActual)
     • Todo su comportamiento visual depende de sprites externos.
-    • Ahora incluye animaciones frame a frame para habilidades Z y X.
+    • Incluye animaciones frame a frame para habilidades Z y X.
+    • Ahora las animaciones pueden repetirse varias veces (ejemplo: habilidad X se repite 3 veces).
 */
 
 public class Arquero extends Jugador {
@@ -27,6 +28,10 @@ public class Arquero extends Jugador {
     private float tiempoAnim;
     private float velocidadAnim;
     private boolean volverASpriteNormal;
+
+    // Control de repeticiones
+    private int repeticionesAnim;        // cuántas veces repetir la animación activa
+    private int repeticionesRealizadas;  // cuántas veces ya se repitió
 
     // ============================================================================
     // CONSTRUCTOR — Inicializa todos los datos importantes del personaje
@@ -51,14 +56,17 @@ public class Arquero extends Jugador {
         velocidadAnim = 0.1f;
         volverASpriteNormal = false;
 
-        // Sprites habilidad Z (ejemplo: 6 frames)
-        for (int i = 1; i <= 6; i++) {
-            animacionZ.add(loadImage("cabMagoHabZ" + i + ".png"));
+        repeticionesAnim = 1;
+        repeticionesRealizadas = 0;
+
+        // Sprites habilidad Z (ejemplo: 12 frames)
+        for (int i = 1; i <= 12; i++) {
+            animacionZ.add(loadImage("cabArqueroHabZ" + i + ".png"));
         }
 
-        // Sprites habilidad X (ejemplo: 8 frames)
-        for (int i = 1; i <= 8; i++) {
-            animacionX.add(loadImage("cabMagoHabX" + i + ".png"));
+        // Sprites habilidad X (ejemplo: 5 frames)
+        for (int i = 1; i <= 5; i++) {
+            animacionX.add(loadImage("cabArqueroHabX" + i + ".png"));
         }
     }
 
@@ -86,11 +94,13 @@ public class Arquero extends Jugador {
             nivelActual.eliminarObstaculoMasCercano(this);
         }
 
-        // Activar animación Z
+        // Activar animación Z (una sola vez)
         animacionActiva = animacionZ;
         frameActual = 0;
         tiempoAnim = 0f;
         volverASpriteNormal = true;
+        repeticionesAnim = 1;
+        repeticionesRealizadas = 0;
 
         println(getNombre() + " dispara una FLECHA EXACTA (elimina 1 obstáculo cercano)");
     }
@@ -109,11 +119,13 @@ public class Arquero extends Jugador {
             nivelActual.eliminar4ObstaculosMasCercanos(this);
         }
 
-        // Activar animación X
+        // Activar animación X (repetida 3 veces)
         animacionActiva = animacionX;
         frameActual = 0;
         tiempoAnim = 0f;
         volverASpriteNormal = true;
+        repeticionesAnim = 3;           // repetir 3 veces
+        repeticionesRealizadas = 0;
 
         println(getNombre() + " usa LLUVIA DE FLECHAS (elimina 4 obstáculos cercanos)");
     }
@@ -131,11 +143,14 @@ public class Arquero extends Jugador {
                 tiempoAnim = 0f;
                 frameActual++;
                 if (frameActual >= animacionActiva.size()) {
-                    animacionActiva = null;
                     frameActual = 0;
-                    if (volverASpriteNormal) {
-                        spriteActual = spriteNormal;
-                        volverASpriteNormal = false;
+                    repeticionesRealizadas++;
+                    if (repeticionesRealizadas >= repeticionesAnim) {
+                        animacionActiva = null;
+                        if (volverASpriteNormal) {
+                            spriteActual = spriteNormal;
+                            volverASpriteNormal = false;
+                        }
                     }
                 }
             }
