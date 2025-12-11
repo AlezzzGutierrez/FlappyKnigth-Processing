@@ -228,9 +228,12 @@ public float getHitboxH() {
             tiempoSpriteEspecial -= dt;
             if (tiempoSpriteEspecial <= 0) spriteActual = spriteNormal;
         }
-        if (tocaPisoOTecho()) {
-    vida = 0; // instakill
-}
+      // 🔥 DAÑO POR PISO/TECHO
+    if (tocaPisoOTecho() && !esInvulnerable) {
+        vida -= 25;
+        if (vida < 0) vida = 0;
+        activarInmunidad(1.0f); // 1 segundo de inmunidad
+    }
 
     }
 

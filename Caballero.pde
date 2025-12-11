@@ -44,7 +44,7 @@ public class Caballero extends Jugador {
 
         sonidos.reproducirCorte();
 
-        float rango = getAncho() * 3;
+        float rango = getAncho() + 65;
         if (nivelActual != null) {
             nivelActual.eliminarObstaculosCercanos(this, rango);
         }

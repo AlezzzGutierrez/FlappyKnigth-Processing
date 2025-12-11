@@ -32,6 +32,11 @@ public class Escudero extends Jugador {
     // ---------------- ESCUDO VISUAL SIMPLE ----------------
     private boolean mostrarEscudoVisual = false;
     private float tiempoEscudoVisual = 0f;
+    
+    // --- PARPADEO DEL ESCUDO ---
+private float timerColorEscudo = 0f;
+private boolean colorAlternado = false;
+
 
     // ============================================================================
     // CONSTRUCTOR — Inicializa todos los datos importantes del personaje
@@ -122,6 +127,16 @@ public class Escudero extends Jugador {
     @Override
     public void actualizar(float dt) {
         super.actualizar(dt);
+        
+        // --- Alternar color cada 0.5 segundos ---
+if (mostrarEscudoVisual) {
+    timerColorEscudo += dt;
+    if (timerColorEscudo >= 0.5f) {
+        timerColorEscudo = 0f;
+        colorAlternado = !colorAlternado; // alternar entre true/false
+    }
+}
+
 
         if (animacionActiva != null && !animacionActiva.isEmpty()) {
             tiempoAnim += dt;
@@ -160,13 +175,21 @@ public class Escudero extends Jugador {
         }
 
         // Escudo visual simple
-        if (mostrarEscudoVisual) {
-            pushStyle();
-            noStroke();
-            fill(0, 120, 255, 120); // azul translúcido
-            float diametro = alto + 40;
-            ellipse(pos.x + ancho / 2f, pos.y - alto / 2f, diametro, diametro);
-            popStyle();
-        }
+        // Escudo visual simple
+if (mostrarEscudoVisual) {
+    pushStyle();
+    noStroke();
+
+    if (colorAlternado) {
+        fill(0, 120, 255, 120);   // 🔵 azul
+    } else {
+        fill(80, 200, 255, 120);  // 🔹 celeste
+    }
+
+    float diametro = alto + 40;
+    ellipse(pos.x + ancho / 2f, pos.y - alto / 2f, diametro, diametro);
+    popStyle();
+}
+
     }
 }
